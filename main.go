@@ -12,5 +12,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(torrent)
+	fmt.Printf("%s: %d pieces\n", torrent.Name, len(torrent.PieceHashes))
 }

@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cristalhq/bencode"
+	"github.com/jackpal/bencode-go"
 )
 
 type bencodeInfo struct {
@@ -49,11 +49,12 @@ func (i *bencodeInfo) splitPieceHashes() ([][sha1.Size]byte, error) {
 }
 
 func (i *bencodeInfo) sha1sum() ([sha1.Size]byte, error) {
-	bytes, err := bencode.Marshal(*i)
+	buf := bytes.Buffer{}
+	err := bencode.Marshal(&buf, *i)
 	if err != nil {
 		return [sha1.Size]byte{}, err
 	}
-	h := sha1.Sum(bytes)
+	h := sha1.Sum(buf.Bytes())
 	return h, nil
 }
 
@@ -62,7 +63,7 @@ func NewTorrentFile(file io.Reader) (*TorrentFile, error) {
 	in.ReadFrom(file)
 
 	bto := bencodeTorrent{}
-	err := bencode.Unmarshal(in.Bytes(), &bto)
+	err := bencode.Unmarshal(in, &bto)
 	if err != nil {
 		return nil, err
 	}
