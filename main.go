@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmmaloney4/chitauri/config"
 	"github.com/jmmaloney4/chitauri/torrent"
+	"github.com/minio/minio-go"
 	"github.com/spf13/viper"
 )
 
@@ -25,14 +26,19 @@ func main() {
 		}
 	}
 
-	config := new([]config.Config)
+	config := new(config.Config)
 
 	err := viper.Unmarshal(config)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println(config)
+
+	minioClient, err := minio.New(config.Endpoints[0].Url, config.Endpoints[0].AccessKey, config.Endpoints[0].SecretKey, config.Endpoints[0].Ssl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println(minioClient.ListBuckets())
 
 	torrent, err := torrent.TorrentFileAtURL("https://releases.ubuntu.com/20.04/ubuntu-20.04.2-live-server-amd64.iso.torrent")
 	if err != nil {
