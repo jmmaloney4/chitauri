@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jmmaloney4/chitauri/config"
 	"github.com/jmmaloney4/chitauri/torrent"
-	"github.com/minio/minio-go"
+	minio "github.com/minio/minio-go/v7"
 	"github.com/spf13/viper"
 )
 
@@ -42,15 +44,28 @@ func main() {
 		clients = append(clients, c)
 	}
 
+	defaultTimeout := 5 * time.Second
+
 	for i, e := range cfg.Endpoints {
 		if e.Name == cfg.Data.Endpoint {
-			exists, err := clients[i].BucketExists(cfg.Data.Bucket)
+			ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+			defer cancel()
+
+			exists, err := clients[i].BucketExists(ctx, cfg.Data.Bucket)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			if !exists {
-				fmt.Printf("Bucket %s does not exist at endpoint %s, creating it.", cfg.Data.Bucket, cfg.Data.Endpoint)
-				clients[i].MakeBucket(cfg.Data.Bucket, "us-east-1")
+				fmt.Printf("Bucket %s does not exist at endpoint %s, creating it.\n", cfg.Data.Bucket, cfg.Data.Endpoint)
+
+				ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+				defer cancel()
+
+				clients[i].MakeBucket(ctx, cfg.Data.Bucket, minio.MakeBucketOptions{
+					Region:        "us-east-1",
+					ObjectLocking: false,
+				})
 			}
 		}
 	}

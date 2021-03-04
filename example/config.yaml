@@ -7,7 +7,7 @@ endpoints:
 
 data:
   endpoint: minio
-  bucket: test
+  bucket: test-fun
   subPath: "/data"
 
 pieces:

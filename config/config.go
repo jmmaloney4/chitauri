@@ -1,6 +1,9 @@
 package config
 
-import "github.com/minio/minio-go"
+import (
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+)
 
 type S3EndpointConfig struct {
 	Name      string
@@ -23,5 +26,8 @@ type Config struct {
 }
 
 func (e *S3EndpointConfig) ToMinioClient() (*minio.Client, error) {
-	return minio.New(e.Url, e.AccessKey, e.SecretKey, e.Ssl)
+	return minio.New(e.Url, &minio.Options{
+		Creds:  credentials.NewStaticV4(e.AccessKey, e.SecretKey, ""),
+		Secure: e.Ssl,
+	})
 }
