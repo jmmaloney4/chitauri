@@ -9,10 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.0.0
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v2.0.0
 
     - name: Build
       run: go build -v ./...
