@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "timezone": "America/Chicago",
+  "extends": ["config:base"],
+  "rebaseWhen": "behind-base-branch",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dashboard",
+  "gomod": {
+    "enabled": true,
+    "postUpdateOptions": ["gomodTidy"]
+  }
+}
