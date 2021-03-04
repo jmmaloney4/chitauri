@@ -8,4 +8,5 @@ require (
 	github.com/minio/minio-go v6.0.14+incompatible // indirect
 	github.com/minio/minio-go/v7 v7.0.10 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
+	github.com/thoas/go-funk v0.7.0 // indirect
 )

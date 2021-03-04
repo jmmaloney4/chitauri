@@ -26,19 +26,34 @@ func main() {
 		}
 	}
 
-	config := new(config.Config)
+	cfg := new(config.Config)
 
-	err := viper.Unmarshal(config)
+	err := viper.Unmarshal(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(config)
 
-	minioClient, err := minio.New(config.Endpoints[0].Url, config.Endpoints[0].AccessKey, config.Endpoints[0].SecretKey, config.Endpoints[0].Ssl)
-	if err != nil {
-		log.Fatalln(err)
+	var clients []*minio.Client
+	for _, e := range cfg.Endpoints {
+		c, err := e.ToMinioClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+		clients = append(clients, c)
 	}
-	fmt.Println(minioClient.ListBuckets())
+
+	for i, e := range cfg.Endpoints {
+		if e.Name == cfg.Data.Endpoint {
+			exists, err := clients[i].BucketExists(cfg.Data.Bucket)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !exists {
+				fmt.Printf("Bucket %s does not exist at endpoint %s, creating it.", cfg.Data.Bucket, cfg.Data.Endpoint)
+				clients[i].MakeBucket(cfg.Data.Bucket, "us-east-1")
+			}
+		}
+	}
 
 	torrent, err := torrent.TorrentFileAtURL("https://releases.ubuntu.com/20.04/ubuntu-20.04.2-live-server-amd64.iso.torrent")
 	if err != nil {

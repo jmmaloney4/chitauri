@@ -4,3 +4,13 @@ endpoints:
   secretKey: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   url: play.min.io
   ssl: true
+
+data:
+  endpoint: minio
+  bucket: test
+  subPath: "/data"
+
+pieces:
+  endpoint: minio
+  bucket: test
+  subPath: "/pieces"
