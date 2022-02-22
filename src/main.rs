@@ -1,12 +1,8 @@
-extern crate serde;
-extern crate serde_bencode;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_bytes;
-
+use clap::Parser;
+use serde::Deserialize;
 use serde_bencode::de;
 use serde_bytes::ByteBuf;
-use std::{io::{self, Read}, fs};
+use std::{io::Read, fs, path::Path};
 
 #[derive(Debug, Deserialize)]
 struct Node(String, i64);
@@ -92,7 +88,59 @@ fn render_torrent(torrent: &Torrent) {
     }
 }
 
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+struct Cli {
+    #[clap(short = 'c', long = "config", value_name = "CONFIG")]
+    config: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Config {
+    s3: S3Config,
+    peer_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct S3Config {
+    region: String,
+    endpoint: String,
+    bucket: String,
+    access_key: String,
+    secret_key: String,   
+}
+
+#[derive(thiserror::Error, Debug)]
+enum ParseConfigError {
+    #[error("Couldn't open config file")]
+    Open(#[from] std::io::Error),
+
+    #[error("Couldn't parse config file")]
+    SerdeYaml(#[from] serde_yaml::Error),
+}
+
+fn parse_config(path: impl AsRef<Path>) -> Result<Config, ParseConfigError> {
+    let file = match fs::File::open(path.as_ref()) {
+        Err(e) => return Err(ParseConfigError::Open(e)),
+        Ok(f) => f
+    };
+
+    return match serde_yaml::from_reader(file) {
+        Err(e) => Err(ParseConfigError::SerdeYaml(e)),
+        Ok(c) => Ok(c),
+    }
+}
+
 fn main() {
+    let args = Cli::parse();
+    let config = match parse_config(args.config) {
+        Ok(c) => c,
+        Err(e) => match e {
+            ParseConfigError::Open(e) => panic!("Failed to open config file: {}", e),
+            ParseConfigError::SerdeYaml(e) => panic!("Failed to parse config file: {}", e),
+        },
+    };
+
     let mut ubuntu = fs::File::open("ubuntu.torrent").unwrap();
     let mut buffer = Vec::new();
     ubuntu.read_to_end(&mut buffer).unwrap();

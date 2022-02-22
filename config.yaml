@@ -1,0 +1,7 @@
+peer_id: "helloworld1234567890"
+s3:
+  region: ""
+  endpoint: ""
+  bucket: ""
+  access_key: ""
+  secret_key: ""
