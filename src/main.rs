@@ -107,6 +107,7 @@ struct Cli {
 struct Config {
     s3: S3Config,
     peer_id: String,
+    port: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -159,6 +160,16 @@ async fn main() {
     println!("{}", torrent.info.info_hash());
 
     let mut url = Url::parse(torrent.announce.unwrap().as_str()).unwrap();
-    url.query_pairs_mut().clear().append_pair("info_hash", torrent.info.info_hash().as_str());
+    url.query_pairs_mut()
+        .clear()
+        .append_pair("info_hash", torrent.info.info_hash().as_str())
+        .append_pair("peer_id", config.peer_id.as_str())
+        .append_pair("port", format!("{}", config.port).as_str())
+        .append_pair("uploaded", "0")
+        .append_pair("downloaded", "0")
+        .append_pair("left", "0")
+        .append_pair("event", "started")
+        .append_pair("compact", "0");
+
     println!("{}", url);
 }
