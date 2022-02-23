@@ -1,13 +1,15 @@
 use clap::Parser;
-use serde::Deserialize;
-use serde_bencode::de;
+use serde::{Deserialize, Serialize};
+use serde_bencode::{de, ser};
 use serde_bytes::ByteBuf;
-use std::{io::Read, fs, path::Path};
+use sha1::{Digest, Sha1};
+use std::{fs, io::Read, path::Path};
+use url::Url;
 
 #[derive(Debug, Deserialize)]
 struct Node(String, i64);
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct File {
     path: Vec<String>,
     length: i64,
@@ -15,7 +17,7 @@ struct File {
     md5sum: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Info {
     name: String,
     pieces: ByteBuf,
@@ -88,6 +90,12 @@ fn render_torrent(torrent: &Torrent) {
     }
 }
 
+impl Info {
+    fn info_hash(&self) -> String {
+        format!("{:40x}", Sha1::digest(ser::to_bytes(self).unwrap()))
+    }
+}
+
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Cli {
@@ -107,7 +115,7 @@ struct S3Config {
     endpoint: String,
     bucket: String,
     access_key: String,
-    secret_key: String,   
+    secret_key: String,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -122,16 +130,17 @@ enum ParseConfigError {
 fn parse_config(path: impl AsRef<Path>) -> Result<Config, ParseConfigError> {
     let file = match fs::File::open(path.as_ref()) {
         Err(e) => return Err(ParseConfigError::Open(e)),
-        Ok(f) => f
+        Ok(f) => f,
     };
 
     return match serde_yaml::from_reader(file) {
         Err(e) => Err(ParseConfigError::SerdeYaml(e)),
         Ok(c) => Ok(c),
-    }
+    };
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Cli::parse();
     let config = match parse_config(args.config) {
         Ok(c) => c,
@@ -146,4 +155,10 @@ fn main() {
     ubuntu.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
     render_torrent(&torrent);
+
+    println!("{}", torrent.info.info_hash());
+
+    let mut url = Url::parse(torrent.announce.unwrap().as_str()).unwrap();
+    url.query_pairs_mut().clear().append_pair("info_hash", torrent.info.info_hash().as_str());
+    println!("{}", url);
 }
