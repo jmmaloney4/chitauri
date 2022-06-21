@@ -44,7 +44,7 @@ impl Info {
 
 #[derive(Debug, Deserialize, Getters)]
 pub struct Torrent {
-    #[getset(get = "pub")]
+    #[getset(get = "pub(crate)")]
     info: Info,
     #[serde(default)]
     announce: Option<String>,

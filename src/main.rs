@@ -20,7 +20,10 @@ use tokio::net::{lookup_host, UdpSocket};
 use url::Url;
 
 use crate::{
-    net::udp::{recv_connect_response, send_announce_request, send_connect_request},
+    net::udp::{
+        packet::{announce_response, connect_request},
+        recv_connect_response,
+    },
     torrent::Torrent,
 };
 
@@ -60,21 +63,51 @@ async fn main() {
 
     println!("{}", torrent.info().info_hash_hex());
 
-    let port = config.get_int("port").unwrap();
-    println!("{}", port);
-    let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
+    let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
+    let peer_id = {
+        let mut buf = [0_u8; 20];
+        buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
+        buf
+    };
+    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).await.unwrap();
 
     let addr = torrent.announce_addr().await.unwrap().next().unwrap();
-    let transaction_id = send_connect_request(&socket, addr).await.unwrap();
-    let connection_id = {
-        let (t, c) = recv_connect_response(&socket).await.unwrap();
-        if t != transaction_id {
-            panic!("Transaction ID mismatch");
-        }
-        c
-    };
-
+    println!("{}", addr);
+    let tx_id = rand::random();
+    println!("{}", tx_id);
+    socket
+        .send_to(&connect_request(tx_id), addr)
+        .await
+        .unwrap();
+    println!("Sent connect request");
+    let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     println!("{}", connection_id);
+    socket
+        .send_to(
+            &announce_response(
+                connection_id,
+                rand::random(),
+                &torrent.info().info_hash(),
+                &peer_id,
+                0,
+                0,
+                0,
+                None,
+                Option::<std::net::Ipv4Addr>::None,
+                rand::random(),
+                None,
+                port,
+            ),
+            addr,
+        )
+        .await
+        .unwrap();
 
-    let _ = send_announce_request(&socket, connection_id).await;
+    let mut buf = BytesMut::new();
+    buf.put_bytes(0, 4096);
+    let (l, addr) = socket.recv_from(buf.as_mut()).await.unwrap();
+    println!("{} {}", l, addr);
+    println!("{:?}", buf.as_ref());
+
+    // let _ = send_announce_request(&socket, connection_id).await;
 }
