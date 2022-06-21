@@ -1,3 +1,4 @@
+use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 use serde_bencode::ser;
 use serde_bytes::ByteBuf;
@@ -18,7 +19,7 @@ struct File {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Info {
+pub struct Info {
     length: i64,
     name: String,
     #[serde(rename = "piece length")]
@@ -27,13 +28,14 @@ struct Info {
 }
 
 impl Info {
-    fn info_hash(&self) -> String {
+    pub fn info_hash(&self) -> String {
         format!("{:40x}", Sha1::digest(ser::to_bytes(self).unwrap()))
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct Torrent {
+#[derive(Debug, Deserialize, Getters)]
+pub struct Torrent {
+    #[getset(get = "pub")]
     info: Info,
     #[serde(default)]
     announce: Option<String>,
@@ -57,7 +59,7 @@ struct Torrent {
 }
 
 impl Torrent {
-    async fn announce_addr(&self) -> Result<Vec<SocketAddr>, Whatever> {
+    pub(crate) async fn announce_addr(&self) -> Result<impl Iterator<Item = SocketAddr>, Whatever> {
         let url = match self.announce.as_ref() {
             None => whatever!("Torrent had no announce string"),
             Some(s) => s,
@@ -72,7 +74,6 @@ impl Torrent {
             Some(host) => tokio::net::lookup_host(format!("{}:{}", host, port))
                 .await
                 .whatever_context("Couldn't lookup host")?,
-        }
-        .collect::<Vec<_>>())
+        })
     }
 }

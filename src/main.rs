@@ -4,7 +4,7 @@ mod torrent;
 use bytes::{Buf, BufMut, BytesMut};
 use clap::Parser;
 use config::{Config, File, FileFormat};
-use log::{info, debug};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use serde_bencode::{de, ser};
 use serde_bytes::ByteBuf;
@@ -18,6 +18,11 @@ use std::{
 };
 use tokio::net::{lookup_host, UdpSocket};
 use url::Url;
+
+use crate::{
+    net::udp::{recv_connect_response, send_connect_request},
+    torrent::Torrent,
+};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -48,78 +53,26 @@ async fn main() {
     info!("Successfully loaded config file {}", args.config);
     debug!("{:#?}", config);
 
-    // println!("{:?}", config.get_int("port").unwrap());
+    let mut file = fs::File::open(args.path).unwrap();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+    let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
-    // let config = match parse_config(args.config) {
-    //     Ok(c) => c,
-    //     Err(e) => match e {
-    //         ParseConfigError::Open(e) => panic!("Failed to open config file: {}", e),
-    //         ParseConfigError::SerdeYaml(e) => panic!("Failed to parse config file: {}", e),
-    //     },
-    // };
+    println!("{}", torrent.info().info_hash());
 
-    // let mut file = fs::File::open(args.path).unwrap();
-    // let mut buffer = Vec::new();
-    // file.read_to_end(&mut buffer).unwrap();
-    // let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
-    // // render_torrent(&torrent);
+    let port = config.get_int("port").unwrap();
+    println!("{}", port);
+    let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
 
-    // println!("{}", torrent.info.info_hash());
+    let addr = torrent.announce_addr().await.unwrap().next().unwrap();
+    let transaction_id = send_connect_request(&socket, addr).await.unwrap();
+    let connection_id = {
+        let (t, c) = recv_connect_response(&socket).await.unwrap();
+        if t != transaction_id {
+            panic!("Transaction ID mismatch");
+        }
+        c
+    };
 
-    // let mut url = Url::parse(torrent.announce.unwrap().as_str()).unwrap();
-    // url.query_pairs_mut()
-    //     .clear()
-    //     .append_pair("info_hash", torrent.info.info_hash().as_str())
-    //     .append_pair("peer_id", config.peer_id.as_str())
-    //     .append_pair("port", format!("{}", config.port).as_str())
-    //     .append_pair("uploaded", "0")
-    //     .append_pair("downloaded", "0")
-    //     .append_pair("left", "0")
-    //     .append_pair("event", "started")
-    //     .append_pair("compact", "0");
-
-    // println!("{}", url);
-    // let port = 55555;
-    // let socket = UdpSocket::bind(format!("0.0.0.0:{port}").parse::<SocketAddrV4>().unwrap())
-    //     .await
-    //     .unwrap();
-
-    // let mut bytes = BytesMut::with_capacity(16);
-    // bytes.put_u64(0x41727101980);
-    // bytes.put_u32(0);
-    // bytes.put_u32(rand::random());
-
-    // println!(
-    //     "{}",
-    //     torrent.announce_addr().await.unwrap().first().unwrap()
-    // );
-
-    // let len = socket
-    //     .send_to(
-    //         &bytes,
-    //         torrent.announce_addr().await.unwrap().first().unwrap(),
-    //     )
-    //     .await
-    //     .unwrap();
-
-    // let mut buf = BytesMut::new();
-    // buf.put_bytes(0, 16);
-
-    // let (l, addr) = socket.recv_from(buf.as_mut()).await.unwrap();
-    // println!("{}, {}, {:?}", addr, l, buf);
-
-    // if buf.get_u32() != 0 {
-    //     whatever!("Nonzero ", );
-    // }
-
-    // println!("{} {} {}", buf.get_u32(), buf.get_u32(), buf.get_u64());
-
-    // let body = reqwest::get(url)
-    // .await
-    // .unwrap()
-    // .text()
-    // .await
-    // .unwrap();
-
-    // println!("{body}");
+    println!("{}", connection_id);
 }
