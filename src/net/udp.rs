@@ -22,7 +22,7 @@ pub(crate) mod packet {
         rv
     }
 
-    pub(crate) fn announce_response<'a>(
+    pub(crate) fn announce_response(
         connection_id: u64,
         transaction_id: u32,
         info_hash: impl Borrow<InfoHash>,
