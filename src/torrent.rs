@@ -2,7 +2,10 @@ use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 use serde_bencode::ser;
 use serde_bytes::ByteBuf;
-use sha1::{Digest, Sha1};
+use sha1::{
+    digest::{generic_array::GenericArray, OutputSizeUser},
+    Digest, Sha1,
+};
 use snafu::{prelude::*, whatever, Whatever};
 use std::net::SocketAddr;
 use url::Url;
@@ -19,7 +22,7 @@ struct File {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Info {
+pub(crate) struct Info {
     length: i64,
     name: String,
     #[serde(rename = "piece length")]
@@ -27,9 +30,15 @@ pub struct Info {
     pieces: ByteBuf,
 }
 
+pub(crate) type InfoHash = GenericArray<u8, <sha1::Sha1Core as OutputSizeUser>::OutputSize>;
+
 impl Info {
-    pub fn info_hash(&self) -> String {
-        format!("{:40x}", Sha1::digest(ser::to_bytes(self).unwrap()))
+    pub fn info_hash(&self) -> InfoHash {
+        Sha1::digest(ser::to_bytes(self).unwrap())
+    }
+
+    pub fn info_hash_hex(&self) -> String {
+        format!("{:40x}", self.info_hash())
     }
 }
 

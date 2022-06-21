@@ -20,7 +20,7 @@ use tokio::net::{lookup_host, UdpSocket};
 use url::Url;
 
 use crate::{
-    net::udp::{recv_connect_response, send_connect_request},
+    net::udp::{recv_connect_response, send_announce_request, send_connect_request},
     torrent::Torrent,
 };
 
@@ -58,7 +58,7 @@ async fn main() {
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
-    println!("{}", torrent.info().info_hash());
+    println!("{}", torrent.info().info_hash_hex());
 
     let port = config.get_int("port").unwrap();
     println!("{}", port);
@@ -75,4 +75,6 @@ async fn main() {
     };
 
     println!("{}", connection_id);
+
+    let _ = send_announce_request(&socket, connection_id).await;
 }

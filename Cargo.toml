@@ -10,6 +10,7 @@ bytes = "1"
 clap = { version = "3", features = ["derive"] }
 config = "0.13.1"
 getset = "0.1"
+generic-array = "0.14"
 hyper = "0.14"
 log = "0.4"
 rand = "0.8"
