@@ -1,7 +1,6 @@
 mod net;
 mod torrent;
 
-use bytes::{Buf};
 use clap::Parser;
 use config::{Config, File, FileFormat};
 
@@ -9,8 +8,6 @@ use log::{debug, info};
 use net::udp::AnnounceRequest;
 
 use serde_bencode::{de};
-
-use sha1::{Digest};
 
 use std::{
     fs,
