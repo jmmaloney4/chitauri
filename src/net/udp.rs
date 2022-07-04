@@ -1,20 +1,22 @@
 use crate::torrent::InfoHash;
-use bytes::{Buf, BufMut, Bytes, BytesMut};
-use deku::prelude::*;
 use deku::prelude::*;
 use derive_builder::Builder;
-use snafu::{whatever, Whatever};
-use std::net::SocketAddr;
-use tokio::net::UdpSocket;
 
 const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
+
+#[repr(u32)]
+enum Action {
+    Connect = 0,
+    Announce = 1,
+    Scrape = 2
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
 #[deku(endian = "big")]
 pub(crate) struct ConnectRequest {
     #[deku(assert_eq = "BITTORRENT_UDP_MAGIC")]
     protocol_id: u64,
-    #[deku(assert_eq = "0")]
+    #[deku(assert_eq = "Action::Connect as u32")]
     action: u32,
     transaction_id: u32,
 }
@@ -23,29 +25,19 @@ impl ConnectRequest {
     pub(crate) fn new(transaction_id: u32) -> Self {
         Self {
             protocol_id: BITTORRENT_UDP_MAGIC,
-            action: 0,
+            action: Action::Connect as u32,
             transaction_id,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
 pub(crate) struct ConnectResponse {
-    #[deku(assert_eq = "0")]
+    #[deku(assert_eq = "Action::Connect as u32")]
     action: u32,
     transaction_id: u32,
     pub connection_id: u64,
-}
-
-impl ConnectResponse {
-    pub(crate) fn new(transaction_id: u32, connection_id: u64) -> Self {
-        Self {
-            action: 0,
-            transaction_id,
-            connection_id,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite)]
@@ -61,7 +53,7 @@ pub(crate) enum AnnounceEvent {
 #[deku(endian = "big")]
 pub(crate) struct AnnounceRequest {
     connection_id: u64,
-    #[deku(assert_eq = "1")]
+    #[deku(assert_eq = "Action::Announce as u32")]
     action: u32,
     transaction_id: u32,
     info_hash: [u8; 20],
@@ -93,7 +85,7 @@ impl AnnounceRequest {
     ) -> Self {
         Self {
             connection_id,
-            action: 1,
+            action: Action::Announce as u32,
             transaction_id,
             info_hash: *info_hash,
             peer_id: *peer_id,
@@ -109,7 +101,7 @@ impl AnnounceRequest {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite)]
 #[deku(endian = "endian", ctx = "endian: deku::ctx::Endian")]
 pub(crate) struct AnnounceResponsePeerV4 {
     ip: [u8; 4],
@@ -122,10 +114,10 @@ impl AnnounceResponsePeerV4 {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
 pub(crate) struct AnnounceResponseV4 {
-    #[deku(assert_eq = "1")]
+    #[deku(assert_eq = "Action::Announce as u32")]
     action: u32,
     transaction_id: u32,
     interval: u32,
@@ -135,30 +127,11 @@ pub(crate) struct AnnounceResponseV4 {
     peers: Vec<AnnounceResponsePeerV4>,
 }
 
-impl AnnounceResponseV4 {
-    pub(crate) fn new(
-        transaction_id: u32,
-        interval: u32,
-        leechers: u32,
-        seeders: u32,
-        peers: Vec<AnnounceResponsePeerV4>,
-    ) -> Self {
-        Self {
-            action: 0,
-            transaction_id,
-            interval,
-            leechers,
-            seeders,
-            peers,
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
 #[deku(endian = "big")]
 pub(crate) struct ScrapeRequest {
     connection_id: u64,
-    #[deku(assert_eq = "2")]
+    #[deku(assert_eq = "Action::Scrape as u32")]
     action: u32,
     transaction_id: u32,
     #[deku(until = "|_| true")]
@@ -184,10 +157,10 @@ pub(crate) struct ScrapeResponseFile {
     leechers: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
 pub(crate) struct ScrapeResponse {
-    #[deku(assert_eq = "2")]
+    #[deku(assert_eq = "Action::Scrape as u32")]
     action: u32,
     transaction_id: u32,
     #[deku(until = "|_| true")]

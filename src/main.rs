@@ -1,25 +1,24 @@
 mod net;
 mod torrent;
 
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{Buf};
 use clap::Parser;
 use config::{Config, File, FileFormat};
-use hyper::client::connect::Connect;
+
 use log::{debug, info};
 use net::udp::AnnounceRequest;
-use serde::{Deserialize, Serialize};
-use serde_bencode::{de, ser};
-use serde_bytes::ByteBuf;
-use sha1::{Digest, Sha1};
-use snafu::{prelude::*, whatever, Whatever};
+
+use serde_bencode::{de};
+
+use sha1::{Digest};
+
 use std::{
     fs,
     io::Read,
-    net::{SocketAddr, SocketAddrV4},
-    path::{Path, PathBuf},
+    path::{PathBuf},
 };
-use tokio::net::{lookup_host, UdpSocket};
-use url::Url;
+use tokio::net::{UdpSocket};
+
 
 use deku::prelude::*;
 
@@ -122,7 +121,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
+    let (len, _addr) = socket.recv_from(&mut buf).await.unwrap();
     let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
     println!("{:?}", announce_response);
 
