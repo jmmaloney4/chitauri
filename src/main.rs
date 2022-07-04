@@ -24,7 +24,7 @@ use url::Url;
 use deku::prelude::*;
 
 use crate::{
-    net::udp::{ConnectRequest, ConnectResponse},
+    net::udp::{ConnectRequest, ConnectResponse, AnnounceResponseV4},
     torrent::Torrent,
 };
 
@@ -95,13 +95,13 @@ async fn main() {
 
     let mut buf = [0_u8; u16::MAX as usize];
     let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
-    let connect_response = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
-    println!("{:?}", connect_response.1);
+    let (_, connect_response) = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
+    println!("{:?}", connect_response);
 
     socket
         .send_to(
             AnnounceRequest::new(
-                connect_response.1.connection_id,
+                connect_response.connection_id,
                 rand::random(),
                 &torrent.info().info_hash(),
                 &peer_id,
@@ -121,6 +121,10 @@ async fn main() {
         )
         .await
         .unwrap();
+    
+    let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
+    let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
+    println!("{:?}", announce_response);
 
     // let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     // println!("{}", connection_id);

@@ -260,6 +260,7 @@ pub(crate) struct AnnounceResponseV4 {
     interval: u32,
     leechers: u32,
     seeders: u32,
+    #[deku(until = "|_| true")]
     peers: Vec<AnnounceResponsePeerV4>,
 }
 
