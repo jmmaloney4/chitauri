@@ -22,7 +22,7 @@ use url::Url;
 
 use deku::prelude::*;
 
-use crate::torrent::Torrent;
+use crate::{torrent::Torrent, net::udp::{ConnectRequest, ConnectResponse}};
 
 // use crate::{
 //     net::udp::{
@@ -125,40 +125,4 @@ async fn main() {
     // println!("{:?}", buf.as_ref());
 
     // let _ = send_announce_request(&socket, connection_id).await;
-}
-
-#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite)]
-#[deku(endian = "big")]
-pub(crate) struct ConnectRequest {
-    protocol_id: u64,
-    action: u32,
-    transaction_id: u32,
-}
-
-impl ConnectRequest {
-    pub(crate) fn new(transaction_id: u32) -> Self {
-        Self {
-            protocol_id: 0x41727101980,
-            action: 0,
-            transaction_id,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite)]
-#[deku(endian = "big")]
-pub(crate) struct ConnectResponse {
-    action: u32,
-    transaction_id: u32,
-    connection_id: u64,
-}
-
-impl ConnectResponse {
-    pub(crate) fn new(transaction_id: u32, connection_id: u64) -> Self {
-        Self {
-            action: 0,
-            transaction_id,
-            connection_id,
-        }
-    }
 }
