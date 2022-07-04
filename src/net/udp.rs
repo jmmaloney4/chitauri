@@ -4,7 +4,6 @@ use derive_builder::Builder;
 
 const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
 
-#[repr(u32)]
 enum Action {
     Connect = 0,
     Announce = 1,
