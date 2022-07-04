@@ -165,7 +165,7 @@ pub(crate) struct ConnectResponse {
     #[deku(assert_eq = "0")]
     action: u32,
     transaction_id: u32,
-    connection_id: u64,
+    pub connection_id: u64,
 }
 
 impl ConnectResponse {
@@ -216,9 +216,9 @@ impl AnnounceRequest {
         left: u64,
         uploaded: u64,
         event: AnnounceEvent,
-        ip: &[u8; 4],
+        ip: Option<&[u8; 4]>,
         key: u32,
-        num_want: i32,
+        num_want: Option<i32>,
         port: u16,
     ) -> Self {
         Self {
@@ -231,10 +231,53 @@ impl AnnounceRequest {
             left,
             uploaded,
             event,
-            ip: *ip,
+            ip: *ip.unwrap_or(&[0; 4]),
             key,
-            num_want,
+            num_want: num_want.unwrap_or(-1),
             port,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[deku(endian = "endian", ctx = "endian: deku::ctx::Endian")]
+pub(crate) struct AnnounceResponsePeerV4 {
+    ip: [u8; 4],
+    port: u16,
+}
+
+impl AnnounceResponsePeerV4 {
+    pub(crate) fn new(ip: &[u8; 4], port: u16) -> Self {
+        Self { ip: *ip, port }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
+#[deku(endian = "big")]
+pub(crate) struct AnnounceResponseV4 {
+    action: u32,
+    transaction_id: u32,
+    interval: u32,
+    leechers: u32,
+    seeders: u32,
+    peers: Vec<AnnounceResponsePeerV4>,
+}
+
+impl AnnounceResponseV4 {
+    pub(crate) fn new(
+        transaction_id: u32,
+        interval: u32,
+        leechers: u32,
+        seeders: u32,
+        peers: Vec<AnnounceResponsePeerV4>,
+    ) -> Self {
+        Self {
+            action: 0,
+            transaction_id,
+            interval,
+            leechers,
+            seeders,
+            peers,
         }
     }
 }

@@ -6,6 +6,7 @@ use clap::Parser;
 use config::{Config, File, FileFormat};
 use hyper::client::connect::Connect;
 use log::{debug, info};
+use net::udp::AnnounceRequest;
 use serde::{Deserialize, Serialize};
 use serde_bencode::{de, ser};
 use serde_bytes::ByteBuf;
@@ -22,7 +23,10 @@ use url::Url;
 
 use deku::prelude::*;
 
-use crate::{torrent::Torrent, net::udp::{ConnectRequest, ConnectResponse}};
+use crate::{
+    net::udp::{ConnectRequest, ConnectResponse},
+    torrent::Torrent,
+};
 
 // use crate::{
 //     net::udp::{
@@ -93,6 +97,30 @@ async fn main() {
     let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
     let connect_response = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
     println!("{:?}", connect_response.1);
+
+    socket
+        .send_to(
+            AnnounceRequest::new(
+                connect_response.1.connection_id,
+                rand::random(),
+                &torrent.info().info_hash(),
+                &peer_id,
+                0,
+                0,
+                0,
+                net::udp::AnnounceEvent::None,
+                None,
+                rand::random(),
+                None,
+                port,
+            )
+            .to_bytes()
+            .unwrap()
+            .as_ref(),
+            addr,
+        )
+        .await
+        .unwrap();
 
     // let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     // println!("{}", connection_id);

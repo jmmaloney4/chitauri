@@ -1,3 +1,4 @@
+use generic_array::typenum::Unsigned;
 use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 use serde_bencode::ser;
@@ -30,17 +31,21 @@ pub(crate) struct Info {
     pieces: ByteBuf,
 }
 
-// pub(crate) struct InfoHash(GenericArray<u8, <sha1::Sha1Core as OutputSizeUser>::OutputSize>);
+pub(crate) type InfoHash =
+    [u8; <<sha1::Sha1Core as OutputSizeUser>::OutputSize as Unsigned>::USIZE];
 
-// impl Info {
-//     pub fn info_hash(&self) -> InfoHash {
-//         InfoHash(Sha1::digest(ser::to_bytes(self).unwrap()))
-//     }
+impl Info {
+    pub fn info_hash(&self) -> InfoHash {
+        Sha1::digest(ser::to_bytes(self).unwrap())
+            .as_slice()
+            .try_into()
+            .unwrap()
+    }
 
-//     pub fn info_hash_hex(&self) -> String {
-//         format!("{:40x}", self.info_hash().0)
-//     }
-// }
+    // pub fn info_hash_hex(&self) -> String {
+    //     format!("{:40x}", self.info_hash())
+    // }
+}
 
 #[derive(Debug, Deserialize, Getters)]
 pub struct Torrent {
