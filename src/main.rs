@@ -4,6 +4,7 @@ mod torrent;
 use bytes::{Buf, BufMut, BytesMut};
 use clap::Parser;
 use config::{Config, File, FileFormat};
+use hyper::client::connect::Connect;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use serde_bencode::{de, ser};
@@ -19,13 +20,17 @@ use std::{
 use tokio::net::{lookup_host, UdpSocket};
 use url::Url;
 
-use crate::{
-    net::udp::{
-        packet::{announce_response, connect_request},
-        recv_connect_response,
-    },
-    torrent::Torrent,
-};
+use deku::prelude::*;
+
+use crate::torrent::Torrent;
+
+// use crate::{
+//     net::udp::{
+//         packet::{announce_response, connect_request},
+//         recv_connect_response,
+//     },
+//     torrent::Torrent,
+// };
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -61,29 +66,37 @@ async fn main() {
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
-    println!("{}", torrent.info().info_hash_hex());
+    // println!("{}", torrent.info().info_hash_hex());
 
-    
-    
-    // let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
-    // let peer_id = {
-    //     let mut buf = [0_u8; 20];
-    //     buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
-    //     buf
-    // };
-    // let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+    let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
+    let peer_id = {
+        let mut buf = [0_u8; 20];
+        buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
+        buf
+    };
+    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).await.unwrap();
 
-    // let addr = torrent.announce_addr().await.unwrap().next().unwrap();
-    // println!("{}", addr);
-    // let tx_id = rand::random();
-    // println!("{}", tx_id);
-    // socket
-    //     .send_to(&connect_request(tx_id), addr)
-    //     .await
-    //     .unwrap();
-    // println!("Sent connect request");
+    let addr = torrent.announce_addr().await.unwrap().next().unwrap();
+    println!("{}", addr);
+    let tx_id = rand::random();
+    println!("{}", tx_id);
+    socket
+        .send_to(
+            ConnectRequest::new(tx_id).to_bytes().unwrap().as_ref(),
+            addr,
+        )
+        .await
+        .unwrap();
+    println!("Sent connect request");
+
+    let mut buf = [0_u8; u16::MAX as usize];
+    let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
+    let connect_response = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
+    println!("{:?}", connect_response.1);
+
     // let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     // println!("{}", connection_id);
+
     // socket
     //     .send_to(
     //         &announce_response(
@@ -112,4 +125,40 @@ async fn main() {
     // println!("{:?}", buf.as_ref());
 
     // let _ = send_announce_request(&socket, connection_id).await;
+}
+
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite)]
+#[deku(endian = "big")]
+pub(crate) struct ConnectRequest {
+    protocol_id: u64,
+    action: u32,
+    transaction_id: u32,
+}
+
+impl ConnectRequest {
+    pub(crate) fn new(transaction_id: u32) -> Self {
+        Self {
+            protocol_id: 0x41727101980,
+            action: 0,
+            transaction_id,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite)]
+#[deku(endian = "big")]
+pub(crate) struct ConnectResponse {
+    action: u32,
+    transaction_id: u32,
+    connection_id: u64,
+}
+
+impl ConnectResponse {
+    pub(crate) fn new(transaction_id: u32, connection_id: u64) -> Self {
+        Self {
+            action: 0,
+            transaction_id,
+            connection_id,
+        }
+    }
 }

@@ -1,65 +1,66 @@
-use bytes::{Buf, BufMut, BytesMut, Bytes};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
+use deku::prelude::*;
 use snafu::{whatever, Whatever};
 use std::net::SocketAddr;
 use tokio::net::UdpSocket;
 
-use crate::torrent::InfoHash;
+// use crate::torrent::InfoHash;
 
 const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
 
-pub(crate) mod packet {
-    use bytes::{Buf, BufMut, BytesMut, Bytes};
-    use std::{borrow::Borrow, net::Ipv4Addr};
+// pub(crate) mod packet {
+//     use bytes::{Buf, BufMut, BytesMut, Bytes};
+//     use std::{borrow::Borrow, net::Ipv4Addr};
 
-    use crate::torrent::InfoHash;
+//     use crate::torrent::InfoHash;
 
-    pub(crate) fn connect_request(transaction_id: u32) -> [u8; 16] {
-        let mut rv = [0_u8; 16];
-        let mut ptr = &mut rv[..];
-        ptr.put_u64(super::BITTORRENT_UDP_MAGIC);
-        ptr.put_u32(0);
-        ptr.put_u32(transaction_id);
-        rv
-    }
+//     pub(crate) fn connect_request(transaction_id: u32) -> [u8; 16] {
+//         let mut rv = [0_u8; 16];
+//         let mut ptr = &mut rv[..];
+//         ptr.put_u64(super::BITTORRENT_UDP_MAGIC);
+//         ptr.put_u32(0);
+//         ptr.put_u32(transaction_id);
+//         rv
+//     }
 
-    pub(crate) fn announce_response(
-        connection_id: u64,
-        transaction_id: u32,
-        info_hash: impl Borrow<InfoHash>,
-        peer_id: impl Borrow<[u8; 20]>,
-        downloaded: u64,
-        left: u64,
-        uploaded: u64,
-        event: Option<u32>,
-        ip: Option<impl Borrow<Ipv4Addr>>,
-        key: u32,
-        num_want: Option<i32>,
-        port: u16,
-    ) -> [u8; 98] {
-        let mut rv = [0u8; 98];
-        let mut ptr = &mut rv[..];
-        ptr.put_u64(connection_id);
-        ptr.put_u32(1_u32);
-        ptr.put_u32(transaction_id);
-        ptr.put_slice(info_hash.borrow());
-        ptr.put_slice(peer_id.borrow());
-        ptr.put_u64(downloaded);
-        ptr.put_u64(left);
-        ptr.put_u64(uploaded);
-        ptr.put_u32(event.unwrap_or(0));
-        ptr.put_slice(
-            match ip {
-                Some(ip) => ip.borrow().octets(),
-                None => [0_u8; 4],
-            }
-            .as_ref(),
-        );
-        ptr.put_u32(key);
-        ptr.put_i32(num_want.unwrap_or(-1));
-        ptr.put_u16(port);
-        rv
-    }
-}
+//     pub(crate) fn announce_response(
+//         connection_id: u64,
+//         transaction_id: u32,
+//         info_hash: impl Borrow<InfoHash>,
+//         peer_id: impl Borrow<[u8; 20]>,
+//         downloaded: u64,
+//         left: u64,
+//         uploaded: u64,
+//         event: Option<u32>,
+//         ip: Option<impl Borrow<Ipv4Addr>>,
+//         key: u32,
+//         num_want: Option<i32>,
+//         port: u16,
+//     ) -> [u8; 98] {
+//         let mut rv = [0u8; 98];
+//         let mut ptr = &mut rv[..];
+//         ptr.put_u64(connection_id);
+//         ptr.put_u32(1_u32);
+//         ptr.put_u32(transaction_id);
+//         ptr.put_slice(info_hash.borrow());
+//         ptr.put_slice(peer_id.borrow());
+//         ptr.put_u64(downloaded);
+//         ptr.put_u64(left);
+//         ptr.put_u64(uploaded);
+//         ptr.put_u32(event.unwrap_or(0));
+//         ptr.put_slice(
+//             match ip {
+//                 Some(ip) => ip.borrow().octets(),
+//                 None => [0_u8; 4],
+//             }
+//             .as_ref(),
+//         );
+//         ptr.put_u32(key);
+//         ptr.put_i32(num_want.unwrap_or(-1));
+//         ptr.put_u16(port);
+//         rv
+//     }
+// }
 
 // pub(crate) async fn send_connect_request(
 //     socket: &UdpSocket,
@@ -115,4 +116,22 @@ pub(crate) async fn recv_connect_response(socket: &UdpSocket) -> Result<(u32, u6
 //     // bytes.put
 
 //     Ok(())
+// }
+
+// #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
+// #[deku(endian = "big")]
+// pub(crate) struct AnnounceRequest {
+//     pub(crate) connection_id: u64,
+//     pub(crate) action: u32,
+//     pub(crate) transaction_id: u32,
+//     pub(crate) info_hash: InfoHash,
+//     pub(crate) peer_id: [u8; 20],
+//     pub(crate) downloaded: u64,
+//     pub(crate) left: u64,
+//     pub(crate) uploaded: u64,
+//     pub(crate) event: u32,
+//     pub(crate) ip: [u8; 4],
+//     pub(crate) key: u32,
+//     pub(crate) num_want: i32,
+//     pub(crate) port: u16,
 // }

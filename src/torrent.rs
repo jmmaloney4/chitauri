@@ -30,17 +30,17 @@ pub(crate) struct Info {
     pieces: ByteBuf,
 }
 
-pub(crate) type InfoHash = GenericArray<u8, <sha1::Sha1Core as OutputSizeUser>::OutputSize>;
+// pub(crate) struct InfoHash(GenericArray<u8, <sha1::Sha1Core as OutputSizeUser>::OutputSize>);
 
-impl Info {
-    pub fn info_hash(&self) -> InfoHash {
-        Sha1::digest(ser::to_bytes(self).unwrap())
-    }
+// impl Info {
+//     pub fn info_hash(&self) -> InfoHash {
+//         InfoHash(Sha1::digest(ser::to_bytes(self).unwrap()))
+//     }
 
-    pub fn info_hash_hex(&self) -> String {
-        format!("{:40x}", self.info_hash())
-    }
-}
+//     pub fn info_hash_hex(&self) -> String {
+//         format!("{:40x}", self.info_hash().0)
+//     }
+// }
 
 #[derive(Debug, Deserialize, Getters)]
 pub struct Torrent {
