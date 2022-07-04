@@ -24,7 +24,7 @@ use url::Url;
 use deku::prelude::*;
 
 use crate::{
-    net::udp::{ConnectRequest, ConnectResponse, AnnounceResponseV4},
+    net::udp::{AnnounceResponseV4, ConnectRequest, ConnectResponse},
     torrent::Torrent,
 };
 
@@ -121,7 +121,7 @@ async fn main() {
         )
         .await
         .unwrap();
-    
+
     let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
     let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
     println!("{:?}", announce_response);
