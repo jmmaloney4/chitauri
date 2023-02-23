@@ -38,6 +38,10 @@
             libiconv
             darwin.apple_sdk.frameworks.Security
           ];
+          
+          buildInputs = with pkgs; [
+            pkg-config
+          ]
         };
 
         # Build *just* the cargo dependencies, so we can reuse
