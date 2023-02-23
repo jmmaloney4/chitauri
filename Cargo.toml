@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bytes = "1"
 clap = { version = "3", features = ["derive"] }
-config = "0.13.1"
+config = "0.13.3"
 deku = "0.15"
 derive_builder = "0.11"
 getset = "0.1"
