@@ -24,7 +24,7 @@ serde_bencode = "0.2"
 serde_bytes = "0.11"
 serde_yaml = "0.8"
 sha1 = "0.10"
-simple_logger = { version = "2.1", features = ["stderr"] }
+simple_logger = { version = "2.3", features = ["stderr"] }
 snafu = "0.7"
 thiserror = "1"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
