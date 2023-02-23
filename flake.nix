@@ -39,7 +39,7 @@
             darwin.apple_sdk.frameworks.Security
           ];
           
-          buildInputs = with pkgs; [
+          nativeBuildInputs = with pkgs; [
             pkg-config
           ];
         };
