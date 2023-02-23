@@ -6,7 +6,7 @@
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Renovate Dashboard",
-  "docker": {
+  "cargo": {
     "enabled": true
   },
   "packageRules": [
