@@ -39,8 +39,9 @@
             darwin.apple_sdk.frameworks.Security
           ];
           
-          nativeBuildInputs = with pkgs; [
+          nativeBuildInputs = with pkgs; lib.optionals pkgs.stdenv.isLinux [
             pkg-config
+            openssl
           ];
         };
 
