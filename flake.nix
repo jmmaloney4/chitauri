@@ -41,7 +41,7 @@
           
           buildInputs = with pkgs; [
             pkg-config
-          ]
+          ];
         };
 
         # Build *just* the cargo dependencies, so we can reuse
