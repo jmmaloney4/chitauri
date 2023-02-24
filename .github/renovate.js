@@ -4,7 +4,7 @@ module.exports = {
   onboarding: false,
   platform: "github",
   repositories: [
-    "Room-Of-Requirement/spellbook"
+    "jmmaloney4/chitauri"
   ],
   logLevel: 'debug'
 }
