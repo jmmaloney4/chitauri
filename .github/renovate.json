@@ -4,7 +4,7 @@
   "extends": ["config:base"],
   "prHourlyLimit": 0,
   "rebaseWhen": "behind-base-branch",
-  "dependencyDashboard": true,
+  "dependencyDashboard": false,
   "dependencyDashboardTitle": "Renovate Dashboard",
   "cargo": {
     "enabled": true
