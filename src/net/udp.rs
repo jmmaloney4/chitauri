@@ -7,7 +7,7 @@ const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
 enum Action {
     Connect = 0,
     Announce = 1,
-    Scrape = 2
+    Scrape = 2,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]

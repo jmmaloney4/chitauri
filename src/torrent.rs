@@ -1,12 +1,9 @@
 use generic_array::typenum::Unsigned;
-use getset::{Getters};
+use getset::Getters;
 use serde::{Deserialize, Serialize};
 use serde_bencode::ser;
 use serde_bytes::ByteBuf;
-use sha1::{
-    digest::{OutputSizeUser},
-    Digest, Sha1,
-};
+use sha1::{digest::OutputSizeUser, Digest, Sha1};
 use snafu::{prelude::*, whatever, Whatever};
 use std::net::SocketAddr;
 use url::Url;

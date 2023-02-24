@@ -7,15 +7,10 @@ use config::{Config, File, FileFormat};
 use log::{debug, info};
 use net::udp::AnnounceRequest;
 
-use serde_bencode::{de};
+use serde_bencode::de;
 
-use std::{
-    fs,
-    io::Read,
-    path::{PathBuf},
-};
-use tokio::net::{UdpSocket};
-
+use std::{fs, io::Read, path::PathBuf};
+use tokio::net::UdpSocket;
 
 use deku::prelude::*;
 
