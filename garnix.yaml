@@ -1,4 +1,4 @@
 builds:
   exclude:
-  - packages.*.chitauri-audit
+  - checks.chitauri-audit
   
