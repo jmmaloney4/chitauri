@@ -13,10 +13,6 @@
     {
       "matchPackagePatterns": [".*"],
       "automerge": true
-    },
-    {
-      "groupName": "rust-pkgs",
-      "matchDatasources": ["crate"]
     }
   ],
   "lockFileMaintenance": {
