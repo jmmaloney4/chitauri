@@ -27,5 +27,5 @@ sha1 = "0.10.0"
 simple_logger = { version = "4.0.0", features = ["stderr"] }
 snafu = "0.7.0"
 thiserror = "1.0.0"
-tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "1.25.0", features = ["rt", "rt-multi-thread", "macros"] }
 url = "2.0.0"
