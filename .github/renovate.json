@@ -11,14 +11,14 @@
   },
   "packageRules": [
     {
-      "matchPackagePatterns": ["*"],
+      "matchPackagePatterns": [".*"],
       "automerge": true
     }
   ],
   "lockFileMaintenance": {
     "enabled": true,
     "extends": ["schedule:daily"],
-    "automerge": false
+    "automerge": true
   },
   "nix": {
     "enabled": true
