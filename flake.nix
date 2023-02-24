@@ -107,7 +107,7 @@
           drv = chitauri;
         };
 
-        devShells.default = pkgs.mkShell {
+        devShells.default = pkgs.mkShell (commonArgs // {
           inputsFrom = builtins.attrValues self.checks;
 
           # Extra inputs can be added here
@@ -115,6 +115,6 @@
             cargo
             rustc
           ];
-        };
+        });
       });
 }
