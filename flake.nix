@@ -68,7 +68,7 @@
           # prevent downstream consumers from building our crate by itself.
           chitauri-clippy = craneLib.cargoClippy (commonArgs // {
             inherit cargoArtifacts;
-            cargoClippyExtraArgs = "--all-targets -- -Dclippy::all";
+            cargoClippyExtraArgs = "--all-targets -- -Dclippy::all -Dfuture-incompatible";
           });
 
           chitauri-doc = craneLib.cargoDoc (commonArgs // {
