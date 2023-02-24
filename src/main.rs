@@ -47,7 +47,7 @@ async fn main() {
         .build()
     {
         Err(e) => {
-            eprintln!("Couldn't parse config file: {}", e);
+            eprintln!("Couldn't parse config file: {e}");
             std::process::exit(1);
         }
         Ok(c) => c,
@@ -69,12 +69,12 @@ async fn main() {
         buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
         buf
     };
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+    let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
 
     let addr = torrent.announce_addr().await.unwrap().next().unwrap();
-    println!("{}", addr);
+    println!("{addr}");
     let tx_id = rand::random();
-    println!("{}", tx_id);
+    println!("{tx_id}");
     socket
         .send_to(
             ConnectRequest::new(tx_id).to_bytes().unwrap().as_ref(),
@@ -87,7 +87,7 @@ async fn main() {
     let mut buf = [0_u8; u16::MAX as usize];
     let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
     let (_, connect_response) = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
-    println!("{:?}", connect_response);
+    println!("{connect_response:?}");
 
     socket
         .send_to(
@@ -115,7 +115,7 @@ async fn main() {
 
     let (len, _addr) = socket.recv_from(&mut buf).await.unwrap();
     let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
-    println!("{:?}", announce_response);
+    println!("{announce_response:?}");
 
     // let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     // println!("{}", connection_id);

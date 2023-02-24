@@ -82,7 +82,7 @@ impl Torrent {
 
         Ok(match url.host_str() {
             None => whatever!("Announce URL has no host"),
-            Some(host) => tokio::net::lookup_host(format!("{}:{}", host, port))
+            Some(host) => tokio::net::lookup_host(format!("{host}:{port}"))
                 .await
                 .whatever_context("Couldn't lookup host")?,
         })

@@ -68,7 +68,7 @@
           # prevent downstream consumers from building our crate by itself.
           chitauri-clippy = craneLib.cargoClippy (commonArgs // {
             inherit cargoArtifacts;
-            cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+            cargoClippyExtraArgs = "--all-targets -- -Dclippy::all";
           });
 
           chitauri-doc = craneLib.cargoDoc (commonArgs // {
@@ -114,6 +114,7 @@
           nativeBuildInputs = with pkgs; [
             cargo
             rustc
+            clippy
           ];
         });
       });

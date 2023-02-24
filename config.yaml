@@ -1,4 +1,4 @@
-peer_id: "helloworld1234567890"
+peer_id: "helloworld1234567890zzs"
 port: 56789
 s3:
   region: ""

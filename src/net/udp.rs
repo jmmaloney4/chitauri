@@ -68,6 +68,7 @@ pub(crate) struct AnnounceRequest {
 }
 
 impl AnnounceRequest {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         connection_id: u64,
         transaction_id: u32,
