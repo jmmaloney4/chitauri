@@ -1,0 +1,5 @@
+builds:
+  exclude:
+  - 'checks.*.chitauri-audit'
+  - 'checks.*.chitauri-coverage'
+  
