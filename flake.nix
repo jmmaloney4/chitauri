@@ -1,0 +1,162 @@
+{
+  inputs = {
+    ### Nixpkgs ###
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    ### Flake / Project Inputs ###
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
+    flake-root.url = "github:srid/flake-root";
+
+    mission-control.url = "github:Platonic-Systems/mission-control";
+
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # inputs.flake-utils.inputs.systems.follows = "systems";
+    };
+
+    systems.url = "github:nix-systems/default";
+
+    treefmt = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    ### Rust Inputs ###
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-analyzer-src.follows = "";
+    };
+
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = {
+    self,
+    nixpkgs,
+    flake-parts,
+    flake-root,
+    mission-control,
+    pre-commit-hooks,
+    systems,
+    treefmt,
+    fenix,
+    crane,
+  } @ inputs:
+    flake-parts.lib.mkFlake {inherit inputs;} ({
+      withSystem,
+      inputs,
+      ...
+    }: {
+      systems = import systems;
+      imports = [
+        flake-root.flakeModule
+        mission-control.flakeModule
+        pre-commit-hooks.flakeModule
+        treefmt.flakeModule
+      ];
+
+      perSystem = {
+        config,
+        self',
+        inputs',
+        pkgs,
+        system,
+        lib,
+        ...
+      }:
+      ### Dev Shell
+        {
+          devShells.default = pkgs.mkShell {
+            inputsFrom = [
+              config.mission-control.devShell
+              config.pre-commit.devShell
+              # config.treefmt.build.devShell
+            ];
+            buildInputs = with pkgs; [
+            ];
+          };
+
+          mission-control.scripts = {
+            fmt = {
+              description = "Format the source tree";
+              exec = config.treefmt.build.wrapper;
+              category = "Dev Tools";
+            };
+          };
+
+          pre-commit = {
+            check.enable = true;
+            settings.hooks.treefmt.enable = true;
+            settings.settings.treefmt.package = config.treefmt.build.wrapper;
+          };
+
+          treefmt.config = {
+            inherit (config.flake-root) projectRootFile;
+            package = pkgs.treefmt;
+            programs.alejandra.enable = true;
+            programs.rustfmt.enable = true;
+          };
+
+          formatter = config.treefmt.build.wrapper;
+        }
+        ### Packages
+        // (let
+          craneLib = crane.lib.${system};
+          src = craneLib.cleanCargoSource (craneLib.path ./.);
+
+          commonArgs = {
+            inherit src;
+
+            buildInputs =
+              [
+                # Add additional build inputs here
+              ]
+              ++ lib.optionals pkgs.stdenv.isDarwin [
+                # Additional darwin specific inputs can be set here
+                pkgs.libiconv
+              ];
+          };
+
+          craneLibLLvmTools =
+            craneLib.overrideToolchain
+            (fenix.packages.${system}.complete.withComponents [
+              "cargo"
+              "llvm-tools"
+              "rustc"
+              "rust-analyzer"
+            ]);
+
+          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+          chitauri = craneLib.buildPackage (commonArgs
+            // {
+              inherit cargoArtifacts;
+            });
+        in {
+          checks = {
+            inherit chitauri;
+
+            chitauri-clippy = craneLib.cargoClippy (commonArgs
+              // {
+                inherit cargoArtifacts;
+                cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+              });
+          };
+
+          packages = {
+            default = chitauri;
+
+            chitauri-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs
+              // {
+                inherit cargoArtifacts;
+              });
+          };
+        });
+    });
+}
