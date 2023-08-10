@@ -77,6 +77,8 @@
               config.mission-control.devShell
               config.pre-commit.devShell
               # config.treefmt.build.devShell
+
+              self'.packages.chitauri-llvm-coverage
             ];
             buildInputs = with pkgs; [
             ];
@@ -150,6 +152,7 @@
           };
 
           packages = {
+            inherit chitauri;
             default = chitauri;
 
             chitauri-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs
