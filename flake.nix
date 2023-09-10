@@ -115,13 +115,20 @@
           commonArgs = {
             inherit src;
 
-            buildInputs =
+            buildInputs = with pkgs;
               [
                 # Add additional build inputs here
               ]
               ++ lib.optionals pkgs.stdenv.isDarwin [
                 # Additional darwin specific inputs can be set here
-                pkgs.libiconv
+                libiconv
+                darwin.apple_sdk.frameworks.Security
+              ];
+
+            nativeBuildInputs = with pkgs;
+              lib.optionals pkgs.stdenv.isLinux [
+                pkg-config
+                openssl
               ];
           };
 
