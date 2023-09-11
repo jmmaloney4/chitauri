@@ -1,0 +1,8 @@
+peer_id: "helloworld1234567890zzs"
+port: 56789
+s3:
+  region: ""
+  endpoint: ""
+  bucket: ""
+  access_key: ""
+  secret_key: ""
