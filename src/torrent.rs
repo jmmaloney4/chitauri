@@ -90,6 +90,7 @@ impl Torrent {
     }
 }
 
+/// See: http://www.bittorrent.org/beps/bep_0012.html
 #[derive(Debug)]
 pub(crate) struct AnnounceList {
     list: Vec<Vec<Url>>,
