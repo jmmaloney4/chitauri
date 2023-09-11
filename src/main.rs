@@ -61,61 +61,63 @@ async fn main() {
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
+    info!("trackers: {:#?}", torrent.announce_list);
+
     // println!("{}", torrent.info().info_hash_hex());
 
-    let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
-    let peer_id = {
-        let mut buf = [0_u8; 20];
-        buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
-        buf
-    };
-    let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
+    // let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
+    // let peer_id = {
+    //     let mut buf = [0_u8; 20];
+    //     buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
+    //     buf
+    // };
+    // let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
 
-    let addr = torrent.announce_addr().await.unwrap().next().unwrap();
-    println!("{addr}");
-    let tx_id = rand::random();
-    println!("{tx_id}");
-    socket
-        .send_to(
-            ConnectRequest::new(tx_id).to_bytes().unwrap().as_ref(),
-            addr,
-        )
-        .await
-        .unwrap();
-    println!("Sent connect request");
+    // let addr = torrent.announce_addr().await.unwrap().next().unwrap();
+    // println!("{addr}");
+    // let tx_id = rand::random();
+    // println!("{tx_id}");
+    // socket
+    //     .send_to(
+    //         ConnectRequest::new(tx_id).to_bytes().unwrap().as_ref(),
+    //         addr,
+    //     )
+    //     .await
+    //     .unwrap();
+    // println!("Sent connect request");
 
-    let mut buf = [0_u8; u16::MAX as usize];
-    let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
-    let (_, connect_response) = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
-    println!("{connect_response:?}");
+    // let mut buf = [0_u8; u16::MAX as usize];
+    // let (len, addr) = socket.recv_from(&mut buf).await.unwrap();
+    // let (_, connect_response) = ConnectResponse::from_bytes((&buf[0..len], 0)).unwrap();
+    // println!("{connect_response:?}");
 
-    socket
-        .send_to(
-            AnnounceRequest::new(
-                connect_response.connection_id,
-                rand::random(),
-                &torrent.info().info_hash(),
-                &peer_id,
-                0,
-                0,
-                0,
-                net::udp::AnnounceEvent::None,
-                None,
-                rand::random(),
-                None,
-                port,
-            )
-            .to_bytes()
-            .unwrap()
-            .as_ref(),
-            addr,
-        )
-        .await
-        .unwrap();
+    // socket
+    //     .send_to(
+    //         AnnounceRequest::new(
+    //             connect_response.connection_id,
+    //             rand::random(),
+    //             &torrent.info().info_hash(),
+    //             &peer_id,
+    //             0,
+    //             0,
+    //             0,
+    //             net::udp::AnnounceEvent::None,
+    //             None,
+    //             rand::random(),
+    //             None,
+    //             port,
+    //         )
+    //         .to_bytes()
+    //         .unwrap()
+    //         .as_ref(),
+    //         addr,
+    //     )
+    //     .await
+    //     .unwrap();
 
-    let (len, _addr) = socket.recv_from(&mut buf).await.unwrap();
-    let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
-    println!("{announce_response:?}");
+    // let (len, _addr) = socket.recv_from(&mut buf).await.unwrap();
+    // let (_, announce_response) = AnnounceResponseV4::from_bytes((&buf[0..len], 0)).unwrap();
+    // println!("{announce_response:?}");
 
     // let (_, connection_id) = recv_connect_response(&socket).await.unwrap();
     // println!("{}", connection_id);

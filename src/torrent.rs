@@ -21,7 +21,8 @@ struct File {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Info {
-    length: i64,
+    length: Option<i64>,
+    files: Option<Vec<File>>,
     name: String,
     #[serde(rename = "piece length")]
     piece_length: i64,
@@ -58,7 +59,7 @@ pub struct Torrent {
     httpseeds: Option<Vec<String>>,
     #[serde(default)]
     #[serde(rename = "announce-list")]
-    announce_list: Option<Vec<Vec<String>>>,
+    pub(crate) announce_list: Option<AnnounceList>,
     #[serde(default)]
     #[serde(rename = "creation date")]
     creation_date: Option<i64>,
@@ -86,5 +87,28 @@ impl Torrent {
                 .await
                 .whatever_context("Couldn't lookup host")?,
         })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct AnnounceList {
+    list: Vec<Vec<Url>>,
+}
+
+impl<'de> Deserialize<'de> for AnnounceList {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let list = Vec::<Vec<String>>::deserialize(deserializer)?
+            .into_iter()
+            .map(|urls| {
+                urls.into_iter()
+                    .map(|url| url.parse::<Url>())
+                    .collect::<Result<Vec<Url>, _>>()
+            })
+            .collect::<Result<Vec<Vec<Url>>, _>>()
+            .map_err(|e| serde::de::Error::custom(e.to_string()))?;
+        Ok(AnnounceList { list })
     }
 }
