@@ -23,16 +23,16 @@ struct File {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Info {
-    length: Option<i64>,
-    files: Option<Vec<File>>,
     name: String,
     #[serde(rename = "piece length")]
     piece_length: i64,
     pieces: ByteBuf,
+    length: Option<i64>,
+    files: Option<Vec<File>>,
 }
 
-#[derive(Clone, PartialEq, Eq, DekuRead, DekuWrite, Serialize, Deserialize)]
-#[deku(endian = "big")]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+// #[deku(endian = "big")]
 pub(crate) struct InfoHash {
     hash: [u8; <<sha1::Sha1Core as OutputSizeUser>::OutputSize as Unsigned>::USIZE],
 }

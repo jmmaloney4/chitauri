@@ -1,4 +1,4 @@
-mod net;
+// mod net;
 mod torrent;
 mod tracker;
 
@@ -6,19 +6,15 @@ use clap::Parser;
 use config::{Config, File, FileFormat};
 
 use log::{debug, info};
-use net::udp::AnnounceRequest;
+// use net::udp::AnnounceRequest;
 
-use serde_bencode::de;
-
+use serde_bencode::{de, ser};
 use std::{fs, io::Read, path::PathBuf};
 use tokio::net::UdpSocket;
 
 use deku::prelude::*;
 
-use crate::{
-    net::udp::{AnnounceResponseV4, ConnectRequest, ConnectResponse},
-    torrent::Torrent,
-};
+use crate::torrent::Torrent;
 
 // use crate::{
 //     net::udp::{
@@ -61,6 +57,8 @@ async fn main() {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
+
+    info!("{:?}", torrent.info());
 
     info!(
         "trackers: {:#?}",
