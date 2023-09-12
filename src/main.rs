@@ -1,3 +1,5 @@
+#![feature(async_fn_in_trait)]
+
 // mod net;
 mod torrent;
 mod tracker;
@@ -14,7 +16,9 @@ use tokio::net::UdpSocket;
 
 use deku::prelude::*;
 
-use crate::torrent::Torrent;
+use crate::torrent::{PeerId, Torrent};
+use crate::tracker::HTTPTracker;
+use crate::tracker::Tracker;
 
 // use crate::{
 //     net::udp::{
@@ -65,14 +69,31 @@ async fn main() {
         torrent.info().info_hash().unwrap().to_hex_string()
     );
 
+    let peerid = PeerId::new();
+    let tracker =
+        HTTPTracker::new(torrent.announce_list.as_ref().unwrap().list[0][0].as_str()).unwrap();
+    let peers = tracker
+        .get_peers(
+            torrent.info().info_hash().unwrap(),
+            peerid,
+            None,
+            None,
+            0,
+            0,
+            0,
+            torrent::AnnounceEvent::Empty,
+        )
+        .await
+        .unwrap();
+
     // println!("{}", torrent.info().info_hash_hex());
 
-    let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
-    let peer_id = {
-        let mut buf = [0_u8; 20];
-        buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
-        buf
-    };
+    // let port: u16 = config.get_int("port").unwrap().try_into().unwrap();
+    // let peer_id = {
+    //     let mut buf = [0_u8; 20];
+    //     buf.copy_from_slice(&config.get_string("peer_id").unwrap().as_bytes()[0..20]);
+    //     buf
+    // };
 
     // let socket = UdpSocket::bind(format!("0.0.0.0:{port}")).await.unwrap();
 

@@ -10,6 +10,28 @@ use std::fmt;
 use std::net::SocketAddr;
 use url::Url;
 
+#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Deserialize, Serialize)]
+#[deku(type = "u32", endian = "endian", ctx = "endian: deku::ctx::Endian")]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum AnnounceEvent {
+    Empty = 0,
+    Completed = 1,
+    Started = 2,
+    Stopped = 3,
+}
+
+impl fmt::Display for AnnounceEvent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            AnnounceEvent::Empty => "empty",
+            AnnounceEvent::Completed => "completed",
+            AnnounceEvent::Started => "started",
+            AnnounceEvent::Stopped => "stopped",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 pub(crate) struct PeerId {
     bytes: [u8; 20],
 }
@@ -150,9 +172,9 @@ impl Torrent {
 }
 
 /// See: http://www.bittorrent.org/beps/bep_0012.html
-#[derive(Debug)]
+#[derive(Debug, Getters)]
 pub(crate) struct AnnounceList {
-    list: Vec<Vec<Url>>,
+    pub(crate) list: Vec<Vec<Url>>,
 }
 
 impl<'de> Deserialize<'de> for AnnounceList {
