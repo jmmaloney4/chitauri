@@ -1,5 +1,6 @@
 mod net;
 mod torrent;
+mod tracker;
 
 use clap::Parser;
 use config::{Config, File, FileFormat};
@@ -61,7 +62,10 @@ async fn main() {
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
-    info!("trackers: {:#?}", torrent.announce_list);
+    info!(
+        "trackers: {:#?}",
+        torrent.info().info_hash().unwrap().hex_string()
+    );
 
     // println!("{}", torrent.info().info_hash_hex());
 

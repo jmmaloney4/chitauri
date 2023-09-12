@@ -1,3 +1,4 @@
+use deku::prelude::*;
 use generic_array::typenum::Unsigned;
 use getset::Getters;
 use serde::{Deserialize, Serialize};
@@ -5,6 +6,7 @@ use serde_bencode::ser;
 use serde_bytes::ByteBuf;
 use sha1::{digest::OutputSizeUser, Digest, Sha1};
 use snafu::{prelude::*, whatever, Whatever};
+use std::fmt;
 use std::net::SocketAddr;
 use url::Url;
 
@@ -29,20 +31,44 @@ pub(crate) struct Info {
     pieces: ByteBuf,
 }
 
-pub(crate) type InfoHash =
-    [u8; <<sha1::Sha1Core as OutputSizeUser>::OutputSize as Unsigned>::USIZE];
+#[derive(Clone, PartialEq, Eq, DekuRead, DekuWrite, Serialize, Deserialize)]
+#[deku(endian = "big")]
+pub(crate) struct InfoHash {
+    hash: [u8; <<sha1::Sha1Core as OutputSizeUser>::OutputSize as Unsigned>::USIZE],
+}
 
-impl Info {
-    pub fn info_hash(&self) -> InfoHash {
-        Sha1::digest(ser::to_bytes(self).unwrap())
-            .as_slice()
-            .try_into()
-            .unwrap()
+impl InfoHash {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.hash
     }
 
-    // pub fn info_hash_hex(&self) -> String {
-    //     format!("{:40x}", self.info_hash())
-    // }
+    pub fn hex_string(&self) -> String {
+        self.as_bytes()
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+impl fmt::Debug for InfoHash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.hex_string())
+    }
+}
+
+impl fmt::Display for InfoHash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.hex_string())
+    }
+}
+
+impl Info {
+    pub fn info_hash(&self) -> Result<InfoHash, serde_bencode::Error> {
+        Ok(InfoHash {
+            hash: Sha1::digest(ser::to_bytes(self)?).into(),
+        })
+    }
 }
 
 #[derive(Debug, Deserialize, Getters)]
