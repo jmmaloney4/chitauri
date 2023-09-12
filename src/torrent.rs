@@ -10,6 +10,39 @@ use std::fmt;
 use std::net::SocketAddr;
 use url::Url;
 
+pub(crate) struct PeerId {
+    bytes: [u8; 20],
+}
+
+impl PeerId {
+    pub fn new() -> Self {
+        let mut bytes = [0; 20];
+        bytes[0..8].copy_from_slice(b"-CH0001-");
+        bytes[8..].copy_from_slice(&rand::random::<[u8; 12]>());
+        Self { bytes }
+    }
+
+    pub fn to_string(&self) -> String {
+        String::from_utf8(self.bytes.to_vec()).unwrap()
+    }
+
+    pub fn as_bytes(&self) -> &[u8; 20] {
+        &self.bytes
+    }
+}
+
+impl fmt::Debug for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct Node(String, i64);
 
@@ -42,7 +75,7 @@ impl InfoHash {
         &self.hash
     }
 
-    pub fn hex_string(&self) -> String {
+    pub fn to_hex_string(&self) -> String {
         self.as_bytes()
             .iter()
             .map(|b| format!("{:02x}", b))
@@ -53,13 +86,13 @@ impl InfoHash {
 
 impl fmt::Debug for InfoHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex_string())
+        write!(f, "{}", self.to_hex_string())
     }
 }
 
 impl fmt::Display for InfoHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex_string())
+        write!(f, "{}", self.to_hex_string())
     }
 }
 
