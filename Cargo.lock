@@ -408,6 +408,8 @@ dependencies = [
  "config",
  "deku",
  "derive_builder",
+ "encoding_rs",
+ "form_urlencoded",
  "generic-array",
  "getset",
  "hyper",

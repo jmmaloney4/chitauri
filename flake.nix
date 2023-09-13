@@ -27,7 +27,7 @@
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-analyzer-src.follows = "";
+      # inputs.rust-analyzer-src.follows = "";
     };
 
     crane = {
@@ -109,7 +109,14 @@
         }
         ### Packages
         // (let
-          craneLib = crane.lib.${system};
+          craneLib =
+            crane.lib.${system}.overrideToolchain
+            (fenix.packages.${system}.complete.withComponents [
+              "cargo"
+              "llvm-tools"
+              "rustc"
+              "rust-analyzer"
+            ]);
           src = craneLib.cleanCargoSource (craneLib.path ./.);
 
           commonArgs = {
@@ -132,15 +139,6 @@
               ];
           };
 
-          craneLibLLvmTools =
-            craneLib.overrideToolchain
-            (fenix.packages.${system}.complete.withComponents [
-              "cargo"
-              "llvm-tools"
-              "rustc"
-              "rust-analyzer"
-            ]);
-
           cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
           chitauri = craneLib.buildPackage (commonArgs
@@ -162,7 +160,7 @@
             inherit chitauri;
             default = chitauri;
 
-            chitauri-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs
+            chitauri-llvm-coverage = craneLib.cargoLlvmCov (commonArgs
               // {
                 inherit cargoArtifacts;
               });

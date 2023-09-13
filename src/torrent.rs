@@ -53,6 +53,19 @@ impl PeerId {
     }
 }
 
+impl TryFrom<&str> for PeerId {
+    type Error = Whatever;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        if s.len() != 20 {
+            whatever!("Peer ID must be 20 bytes long")
+        }
+        let mut bytes = [0; 20];
+        bytes.copy_from_slice(s.as_bytes());
+        Ok(Self { bytes })
+    }
+}
+
 impl fmt::Debug for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
@@ -71,7 +84,7 @@ struct Node(String, i64);
 #[derive(Debug, Serialize, Deserialize)]
 struct File {
     path: Vec<String>,
-    length: i64,
+    pub(crate) length: i64,
     #[serde(default)]
     md5sum: Option<String>,
 }
@@ -82,7 +95,7 @@ pub(crate) struct Info {
     #[serde(rename = "piece length")]
     piece_length: i64,
     pieces: ByteBuf,
-    length: Option<i64>,
+    pub(crate) length: Option<i64>,
     files: Option<Vec<File>>,
 }
 
@@ -131,7 +144,7 @@ pub struct Torrent {
     #[getset(get = "pub(crate)")]
     info: Info,
     #[serde(default)]
-    announce: Option<String>,
+    pub(crate) announce: Option<String>,
     #[serde(default)]
     nodes: Option<Vec<Node>>,
     #[serde(default)]

@@ -69,9 +69,10 @@ async fn main() {
         torrent.info().info_hash().unwrap().to_hex_string()
     );
 
-    let peerid = PeerId::new();
+    let peerid = PeerId::try_from("ABCDEFGHIJKLMNOPQRST").unwrap();
     let tracker =
-        HTTPTracker::new(torrent.announce_list.as_ref().unwrap().list[0][0].as_str()).unwrap();
+        // HTTPTracker::new(torrent.announce_list.as_ref().unwrap().list[0][0].as_str()).unwrap();
+        HTTPTracker::new(torrent.announce.as_ref().unwrap()).unwrap();
     let peers = tracker
         .get_peers(
             torrent.info().info_hash().unwrap(),
@@ -80,11 +81,12 @@ async fn main() {
             None,
             0,
             0,
-            0,
-            torrent::AnnounceEvent::Empty,
+            torrent.info().length.unwrap().try_into().unwrap(),
+            torrent::AnnounceEvent::Started,
         )
         .await
         .unwrap();
+    info!("{:#?}", peers);
 
     // println!("{}", torrent.info().info_hash_hex());
 

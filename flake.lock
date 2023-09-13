@@ -28,7 +28,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-analyzer-src": []
+        "rust-analyzer-src": "rust-analyzer-src"
       },
       "locked": {
         "lastModified": 1694326764,
@@ -266,6 +266,23 @@
         "pre-commit-hooks": "pre-commit-hooks",
         "systems": "systems_3",
         "treefmt": "treefmt"
+      }
+    },
+    "rust-analyzer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694421477,
+        "narHash": "sha256-df6YZzR57VFzkOPwIohJfC0fRwgq6yUPbMJkKAtQyAE=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "cc6c8209cbaf7df55013977cf5cc8488d6b7ff1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
       }
     },
     "rust-overlay": {
