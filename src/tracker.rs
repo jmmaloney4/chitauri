@@ -3,6 +3,7 @@ use form_urlencoded::byte_serialize;
 use log::info;
 use reqwest::IntoUrl;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::fs;
 use std::net::IpAddr;
@@ -42,9 +43,10 @@ pub(crate) trait Tracker {
 //     peers: Vec<HTTPTrackerResponsePeer>,
 // }
 
-pub(crate) struct HTTPTrackerResponse {
+#[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct HTTPAnnounceResponse {
     interval: u32,
-    peers: String,
+    peers: serde_bencode::value::Value,
 }
 
 pub(crate) struct HTTPTracker {
@@ -118,6 +120,9 @@ impl Tracker for HTTPTracker {
         let req = reqwest::get(url).await?;
         let body = req.text().await?;
         info!("{}", body);
+
+        let resp = serde_bencode::from_str::<HTTPAnnounceResponse>(&body);
+        info!("{:?}", resp);
 
         Ok(Vec::new())
     }
