@@ -32,6 +32,7 @@ impl fmt::Display for AnnounceEvent {
     }
 }
 
+#[derive(Clone, Deserialize, Serialize)]
 pub(crate) struct PeerId {
     bytes: [u8; 20],
 }

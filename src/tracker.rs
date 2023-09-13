@@ -2,7 +2,9 @@ use encoding_rs::WINDOWS_1252;
 use form_urlencoded::byte_serialize;
 use log::info;
 use reqwest::IntoUrl;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fs;
 use std::net::IpAddr;
 use url::Url;
 
@@ -25,6 +27,24 @@ pub(crate) trait Tracker {
         left: u64,
         event: AnnounceEvent,
     ) -> Result<Vec<String>, reqwest::Error>;
+}
+
+// #[derive(Debug, Serialize, Deserialize)]
+// pub(crate) struct HTTPTrackerResponsePeer {
+//     id: Option<PeerId>,
+//     ip: IpAddr,
+//     port: u16,
+// }
+
+// #[derive(Debug, Serialize, Deserialize)]
+// pub(crate) struct HTTPTrackerResponse {
+//     interval: u32,
+//     peers: Vec<HTTPTrackerResponsePeer>,
+// }
+
+pub(crate) struct HTTPTrackerResponse {
+    interval: u32,
+    peers: String,
 }
 
 pub(crate) struct HTTPTracker {
@@ -93,7 +113,6 @@ impl Tracker for HTTPTracker {
                 query_pairs.append_pair("event", &event.to_string());
             }
         }
-        // query_pairs.finish();
 
         info!("{}", url);
         let req = reqwest::get(url).await?;
