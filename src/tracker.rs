@@ -19,7 +19,7 @@ pub(crate) trait Tracker {
         info_hash: InfoHash,
         peer_id: PeerId,
         ip: Option<IpAddr>,
-        port: Option<u16>,
+        port: u16,
         uploaded: u64,
         downloaded: u64,
         left: u64,
@@ -57,7 +57,7 @@ impl Tracker for HTTPTracker {
         info_hash: InfoHash,
         peer_id: PeerId,
         ip: Option<IpAddr>,
-        port: Option<u16>,
+        port: u16,
         uploaded: u64,
         downloaded: u64,
         left: u64,
@@ -78,15 +78,14 @@ impl Tracker for HTTPTracker {
                     &iso_8859_1_decode(info_hash.as_bytes()),
                 )
                 .append_pair("peer_id", &peer_id.to_string())
+                .append_pair("port", &port.to_string())
                 .append_pair("uploaded", &uploaded.to_string())
                 .append_pair("downloaded", &downloaded.to_string())
                 .append_pair("left", &left.to_string())
                 .append_pair("compact", "1")
-                .append_pair("no_peer_id", "0");
+                .append_pair("no_peer_id", "0")
+                .append_pair("numwant", "50");
 
-            if port.is_some() {
-                query_pairs.append_pair("port", &port.unwrap().to_string());
-            }
             if ip.is_some() {
                 query_pairs.append_pair("ip", &ip.unwrap().to_string());
             }
