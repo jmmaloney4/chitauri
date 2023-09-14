@@ -81,6 +81,7 @@
               self'.packages.chitauri-llvm-coverage
             ];
             buildInputs = with pkgs; [
+              bencodetools
             ];
           };
 

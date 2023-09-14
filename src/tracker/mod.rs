@@ -2,7 +2,7 @@ use encoding_rs::WINDOWS_1252;
 use form_urlencoded::byte_serialize;
 use log::info;
 use reqwest::IntoUrl;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::fs;
@@ -31,20 +31,7 @@ pub(crate) trait Tracker {
     ) -> Result<Vec<String>, reqwest::Error>;
 }
 
-// #[derive(Debug, Serialize, Deserialize)]
-// pub(crate) struct HTTPTrackerResponsePeer {
-//     id: Option<PeerId>,
-//     ip: IpAddr,
-//     port: u16,
-// }
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub(crate) struct HTTPTrackerResponse {
-//     interval: u32,
-//     peers: Vec<HTTPTrackerResponsePeer>,
-// }
-
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub(crate) struct HTTPAnnounceResponsePeer {
     id: Option<PeerId>,
     #[serde(deserialize_with = "deserialize_ipaddr")]
@@ -56,8 +43,9 @@ fn deserialize_ipaddr<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let s: &str = Deserialize::deserialize(deserializer)?;
-    match IpAddr::from_str(s) {
+    let s: String = Deserialize::deserialize(deserializer)?;
+    println!("PARSING IP: {}", s);
+    match IpAddr::from_str(&s) {
         Ok(ip) => Ok(ip),
         Err(e) => Err(serde::de::Error::custom(format!(
             "failed to parse ip address: {}",
@@ -66,11 +54,50 @@ where
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub(crate) struct HTTPAnnounceResponse {
     interval: u32,
     // peers: serde_bencode::value::Value,
+    #[serde(deserialize_with = "deserialize_peers")]
     peers: Vec<HTTPAnnounceResponsePeer>,
+}
+
+fn deserialize_peers<'de, D>(deserializer: D) -> Result<Vec<HTTPAnnounceResponsePeer>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    println!("DESERIALIZING PEERS");
+    let x = <Vec<HTTPAnnounceResponsePeer>>::deserialize(deserializer)?;
+    // let bytes = x.into_vec();
+    println!("{:?}", x);
+    Ok(x)
+
+    // #[derive(Deserialize)]
+    // #[serde(untagged)]
+    // enum PeerType {
+    //     NonCompact(Vec<HTTPAnnounceResponsePeer>),
+    //     Compact(String),
+    // }
+
+    // match PeerType::deserialize(deserializer)? {
+    //     PeerType::NonCompact(peers) => Ok(peers),
+    //     PeerType::Compact(bytes) => deserialize_compact_peers(bytes.as_bytes()).map_err(de::Error::custom),
+    // }
+}
+
+fn deserialize_compact_peers(
+    bytes: &[u8],
+) -> Result<Vec<HTTPAnnounceResponsePeer>, serde_bencode::Error> {
+    println!("DESERIALIZING COMPACT PEERS");
+    let mut peers = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        let ip = IpAddr::from([bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]]);
+        let port = u16::from_be_bytes([bytes[i + 4], bytes[i + 5]]);
+        peers.push(HTTPAnnounceResponsePeer { id: None, ip, port });
+        i += 6;
+    }
+    Ok(peers)
 }
 
 pub(crate) struct HTTPTracker {
@@ -120,7 +147,7 @@ impl Tracker for HTTPTracker {
                 .append_pair("uploaded", &uploaded.to_string())
                 .append_pair("downloaded", &downloaded.to_string())
                 .append_pair("left", &left.to_string())
-                .append_pair("compact", "0")
+                .append_pair("compact", "1")
                 .append_pair("no_peer_id", "0")
                 .append_pair("numwant", "50");
 
@@ -141,5 +168,42 @@ impl Tracker for HTTPTracker {
         info!("{:?}", resp);
 
         Ok(Vec::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tracker::{HTTPAnnounceResponse, HTTPAnnounceResponsePeer};
+    use std::net::{IpAddr, Ipv4Addr};
+    use std::str::FromStr;
+
+    #[test]
+    fn deserialize_http_response_non_compact() {
+        let str = "d8:completei113e10:incompletei3e8:intervali1800e5:peersld2:ip14:185.125.190.594:porti6888eed2:ip39:2a02:1210:4831:9700:ba27:ebff:fe91:60cd4:porti51316eed2:ip22:2620:1d5:ffd:1702::2134:porti51413eeee";
+        let resp = serde_bencode::from_str::<HTTPAnnounceResponse>(str);
+        assert!(resp.is_ok());
+        assert_eq!(
+            resp.unwrap(),
+            HTTPAnnounceResponse {
+                interval: 1800,
+                peers: vec![
+                    HTTPAnnounceResponsePeer {
+                        id: None,
+                        ip: IpAddr::V4(Ipv4Addr::new(185, 125, 190, 59)),
+                        port: 6888,
+                    },
+                    HTTPAnnounceResponsePeer {
+                        id: None,
+                        ip: IpAddr::from_str("2a02:1210:4831:9700:ba27:ebff:fe91:60cd").unwrap(),
+                        port: 51316,
+                    },
+                    HTTPAnnounceResponsePeer {
+                        id: None,
+                        ip: IpAddr::from_str("2620:1d5:ffd:1702::213").unwrap(),
+                        port: 51413,
+                    },
+                ],
+            }
+        );
     }
 }
