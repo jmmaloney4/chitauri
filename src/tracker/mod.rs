@@ -66,29 +66,37 @@ fn deserialize_peers<'de, D>(deserializer: D) -> Result<Vec<HTTPAnnounceResponse
 where
     D: serde::Deserializer<'de>,
 {
-    println!("DESERIALIZING PEERS");
-    let x = <Vec<HTTPAnnounceResponsePeer>>::deserialize(deserializer)?;
-    // let bytes = x.into_vec();
+    // println!("DESERIALIZING PEERS");
+    // let x = <Vec<HTTPAnnounceResponsePeer>>::deserialize(deserializer)?;
+
+    // println!("{:?}", x);
+    // Ok(x)
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum PeerType {
+        NonCompact(Vec<HTTPAnnounceResponsePeer>),
+        Compact(ByteBuf),
+    }
+
+    let x = match PeerType::deserialize(deserializer)? {
+        PeerType::NonCompact(peers) => Ok(peers),
+        PeerType::Compact(bytes) => deserialize_compact_peers(&bytes).map_err(de::Error::custom),
+    };
     println!("{:?}", x);
-    Ok(x)
-
-    // #[derive(Deserialize)]
-    // #[serde(untagged)]
-    // enum PeerType {
-    //     NonCompact(Vec<HTTPAnnounceResponsePeer>),
-    //     Compact(String),
-    // }
-
-    // match PeerType::deserialize(deserializer)? {
-    //     PeerType::NonCompact(peers) => Ok(peers),
-    //     PeerType::Compact(bytes) => deserialize_compact_peers(bytes.as_bytes()).map_err(de::Error::custom),
-    // }
+    x
 }
 
 fn deserialize_compact_peers(
     bytes: &[u8],
 ) -> Result<Vec<HTTPAnnounceResponsePeer>, serde_bencode::Error> {
     println!("DESERIALIZING COMPACT PEERS");
+    if bytes.len() % 6 != 0 {
+        return Err(serde_bencode::Error::Custom(format!(
+            "invalid compact peer list length: {}",
+            bytes.len()
+        )));
+    }
     let mut peers = Vec::new();
     let mut i = 0;
     while i < bytes.len() {
@@ -97,6 +105,7 @@ fn deserialize_compact_peers(
         peers.push(HTTPAnnounceResponsePeer { id: None, ip, port });
         i += 6;
     }
+    println!("{:?}", peers);
     Ok(peers)
 }
 
