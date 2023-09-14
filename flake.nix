@@ -117,6 +117,7 @@
               "llvm-tools"
               "rustc"
               "rust-analyzer"
+              "clippy"
             ]);
           src = craneLib.cleanCargoSource (craneLib.path ./.);
 
