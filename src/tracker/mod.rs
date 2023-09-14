@@ -171,7 +171,8 @@ impl Tracker for HTTPTracker {
         info!("{}", url);
         let req = reqwest::get(url).await?;
         let body = req.bytes().await?;
-        info!("{}", String::from_utf8_lossy(&body));
+        // info!("{}", String::from_utf8_lossy(&body));
+        println!("{:?}", body);
 
         let resp = serde_bencode::from_bytes::<HTTPAnnounceResponse>(&body);
         info!("{:?}", resp);
@@ -214,5 +215,22 @@ mod tests {
                 ],
             }
         );
+    }
+    #[test]
+    fn deserialize_http_response_compact() {
+        let bytes = b"d8:completei12e10:incompletei1e8:intervali1800e5:peers6:\xb9}\xbe;\x1b\x1ee";
+        let resp = serde_bencode::from_bytes::<HTTPAnnounceResponse>(bytes);
+        assert!(resp.is_ok());
+        assert_eq!(
+            resp.unwrap(),
+            HTTPAnnounceResponse {
+                interval: 1800,
+                peers: vec![HTTPAnnounceResponsePeer {
+                    id: None,
+                    ip: IpAddr::V4(Ipv4Addr::new(185, 125, 190, 59)),
+                    port: 6942
+                }]
+            }
+        )
     }
 }

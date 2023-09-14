@@ -63,12 +63,12 @@ async fn main() {
     file.read_to_end(&mut buffer).unwrap();
     let torrent = de::from_bytes::<Torrent>(&buffer).unwrap();
 
-    info!("{:?}", torrent.info());
+    // info!("{:?}", torrent.info());
 
-    info!(
-        "trackers: {:#?}",
-        torrent.info().info_hash().unwrap().to_hex_string()
-    );
+    // info!(
+    //     "trackers: {:#?}",
+    //     torrent.info().info_hash().unwrap().to_hex_string()
+    // );
 
     let peerid = PeerId::try_from("ABCDEFGHIJKLMNOPQRST").unwrap();
     let tracker =
