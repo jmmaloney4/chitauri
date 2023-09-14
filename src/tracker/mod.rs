@@ -170,10 +170,10 @@ impl Tracker for HTTPTracker {
 
         info!("{}", url);
         let req = reqwest::get(url).await?;
-        let body = req.text().await?;
-        info!("{}", body);
+        let body = req.bytes().await?;
+        info!("{}", String::from_utf8_lossy(&body));
 
-        let resp = serde_bencode::from_str::<HTTPAnnounceResponse>(&body);
+        let resp = serde_bencode::from_bytes::<HTTPAnnounceResponse>(&body);
         info!("{:?}", resp);
 
         Ok(Vec::new())
