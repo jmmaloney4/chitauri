@@ -1,4 +1,5 @@
 #![feature(async_fn_in_trait)]
+#![feature(addr_parse_ascii)]
 
 // mod net;
 mod torrent;

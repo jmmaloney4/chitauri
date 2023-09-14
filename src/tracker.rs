@@ -7,6 +7,7 @@ use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::fs;
 use std::net::IpAddr;
+use std::str::FromStr;
 use url::Url;
 
 use crate::torrent::{AnnounceEvent, InfoHash, PeerId};
@@ -46,8 +47,23 @@ pub(crate) trait Tracker {
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct HTTPAnnounceResponsePeer {
     id: Option<PeerId>,
-    ip: String,
+    #[serde(deserialize_with = "deserialize_ipaddr")]
+    ip: IpAddr,
     port: u16,
+}
+
+fn deserialize_ipaddr<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    match IpAddr::from_str(s) {
+        Ok(ip) => Ok(ip),
+        Err(e) => Err(serde::de::Error::custom(format!(
+            "failed to parse ip address: {}",
+            e
+        ))),
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -104,7 +120,7 @@ impl Tracker for HTTPTracker {
                 .append_pair("uploaded", &uploaded.to_string())
                 .append_pair("downloaded", &downloaded.to_string())
                 .append_pair("left", &left.to_string())
-                .append_pair("compact", "1")
+                .append_pair("compact", "0")
                 .append_pair("no_peer_id", "0")
                 .append_pair("numwant", "50");
 
