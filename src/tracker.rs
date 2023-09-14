@@ -44,9 +44,17 @@ pub(crate) trait Tracker {
 // }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct HTTPAnnounceResponsePeer {
+    id: Option<PeerId>,
+    ip: String,
+    port: u16,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct HTTPAnnounceResponse {
     interval: u32,
-    peers: serde_bencode::value::Value,
+    // peers: serde_bencode::value::Value,
+    peers: Vec<HTTPAnnounceResponsePeer>,
 }
 
 pub(crate) struct HTTPTracker {
@@ -90,15 +98,7 @@ impl Tracker for HTTPTracker {
             let mut query_pairs = url.query_pairs_mut();
             query_pairs
                 .encoding_override(Some(&iso_8859_1_encode))
-                .append_pair(
-                    "info_hash",
-                    // byte_serialize(info_hash.as_bytes())
-                    //     .collect::<String>()
-                    //     .as_str(),
-                    // WINDOWS_1252.encode(info_hash.as_bytes()).0.to_owned(),
-                    // &info_hash.to_hex_string(),
-                    &iso_8859_1_decode(info_hash.as_bytes()),
-                )
+                .append_pair("info_hash", &iso_8859_1_decode(info_hash.as_bytes()))
                 .append_pair("peer_id", &peer_id.to_string())
                 .append_pair("port", &port.to_string())
                 .append_pair("uploaded", &uploaded.to_string())
