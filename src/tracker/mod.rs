@@ -1,11 +1,9 @@
-use encoding_rs::WINDOWS_1252;
-use form_urlencoded::byte_serialize;
 use log::info;
 use reqwest::IntoUrl;
 use serde::{de, Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
-use std::fs;
+
 use std::net::IpAddr;
 use std::str::FromStr;
 use url::Url;
