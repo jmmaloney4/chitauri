@@ -3,22 +3,10 @@ use derive_builder::Builder;
 
 use crate::torrent::InfoHash;
 
-const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
-
 enum Action {
     Connect = 0,
     Announce = 1,
     Scrape = 2,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Builder)]
-#[deku(endian = "big")]
-pub(crate) struct ConnectRequest {
-    #[deku(assert_eq = "BITTORRENT_UDP_MAGIC")]
-    protocol_id: u64,
-    #[deku(assert_eq = "Action::Connect as u32")]
-    action: u32,
-    transaction_id: u32,
 }
 
 impl ConnectRequest {

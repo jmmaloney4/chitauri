@@ -1,4 +1,5 @@
 mod http;
+mod udp;
 
 use std::fmt;
 use std::net::IpAddr;

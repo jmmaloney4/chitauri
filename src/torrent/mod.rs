@@ -1,6 +1,7 @@
 use std::fmt;
 use std::net::SocketAddr;
 
+use deku::prelude::*;
 use generic_array::typenum::Unsigned;
 use getset::Getters;
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,7 @@ use snafu::prelude::*;
 use snafu::{whatever, Whatever};
 use url::Url;
 
-#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Deserialize, Serialize, DekuRead, DekuWrite)]
 pub(crate) struct PeerId {
     bytes: [u8; 20],
 }
@@ -80,8 +81,8 @@ pub(crate) struct Info {
     files: Option<Vec<File>>,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
-// #[deku(endian = "big")]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, DekuRead, DekuWrite)]
+#[deku(endian = "big")]
 pub(crate) struct InfoHash {
     hash: [u8; <<sha1::Sha1Core as OutputSizeUser>::OutputSize as Unsigned>::USIZE],
 }
