@@ -1,6 +1,7 @@
-use crate::torrent::InfoHash;
 use deku::prelude::*;
 use derive_builder::Builder;
+
+use crate::torrent::InfoHash;
 
 const BITTORRENT_UDP_MAGIC: u64 = 0x41727101980;
 

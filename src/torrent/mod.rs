@@ -1,36 +1,16 @@
-use deku::prelude::*;
+use std::fmt;
+use std::net::SocketAddr;
+
 use generic_array::typenum::Unsigned;
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 use serde_bencode::ser;
 use serde_bytes::ByteBuf;
-use sha1::{digest::OutputSizeUser, Digest, Sha1};
-use snafu::{prelude::*, whatever, Whatever};
-use std::fmt;
-use std::net::SocketAddr;
+use sha1::digest::OutputSizeUser;
+use sha1::{Digest, Sha1};
+use snafu::prelude::*;
+use snafu::{whatever, Whatever};
 use url::Url;
-
-#[derive(Debug, Clone, PartialEq, Eq, DekuRead, DekuWrite, Deserialize, Serialize)]
-#[deku(type = "u32", endian = "endian", ctx = "endian: deku::ctx::Endian")]
-#[serde(rename_all = "lowercase")]
-pub(crate) enum AnnounceEvent {
-    Empty = 0,
-    Completed = 1,
-    Started = 2,
-    Stopped = 3,
-}
-
-impl fmt::Display for AnnounceEvent {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            AnnounceEvent::Empty => "empty",
-            AnnounceEvent::Completed => "completed",
-            AnnounceEvent::Started => "started",
-            AnnounceEvent::Stopped => "stopped",
-        };
-        write!(f, "{}", s)
-    }
-}
 
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub(crate) struct PeerId {

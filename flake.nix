@@ -76,7 +76,7 @@
             inputsFrom = [
               config.mission-control.devShell
               config.pre-commit.devShell
-              # config.treefmt.build.devShell
+              config.treefmt.build.devShell
 
               self'.packages.chitauri-llvm-coverage
             ];
@@ -103,7 +103,10 @@
             inherit (config.flake-root) projectRootFile;
             package = pkgs.treefmt;
             programs.alejandra.enable = true;
-            programs.rustfmt.enable = true;
+            programs.rustfmt = {
+              enable = true;
+              package = self'.packages.toolchain;
+            };
           };
 
           formatter = config.treefmt.build.wrapper;
@@ -112,13 +115,7 @@
         // (let
           craneLib =
             crane.lib.${system}.overrideToolchain
-            (fenix.packages.${system}.complete.withComponents [
-              "cargo"
-              "llvm-tools"
-              "rustc"
-              "rust-analyzer"
-              "clippy"
-            ]);
+            self'.packages.toolchain;
           src = craneLib.cleanCargoSource (craneLib.path ./.);
 
           commonArgs = {
@@ -161,6 +158,15 @@
           packages = {
             inherit chitauri;
             default = chitauri;
+
+            toolchain = fenix.packages.${system}.complete.withComponents [
+              "cargo"
+              "llvm-tools"
+              "rustc"
+              "rust-analyzer"
+              "rustfmt"
+              "clippy"
+            ];
 
             chitauri-llvm-coverage = craneLib.cargoLlvmCov (commonArgs
               // {

@@ -5,28 +5,19 @@
 mod torrent;
 mod tracker;
 
+use std::fs;
+use std::io::Read;
+use std::path::PathBuf;
+
 use clap::Parser;
 use config::{Config, File, FileFormat};
-
 use log::{debug, info};
-// use net::udp::AnnounceRequest;
-
 use serde_bencode::de;
-use std::{fs, io::Read, path::PathBuf};
 
 use crate::torrent::{PeerId, Torrent};
-use crate::tracker::HTTPTracker;
-use crate::tracker::Tracker;
+use crate::tracker::{AnnounceEvent, HTTPTracker, Tracker};
 
-// use crate::{
-//     net::udp::{
-//         packet::{announce_response, connect_request},
-//         recv_connect_response,
-//     },
-//     torrent::Torrent,
-// };
-
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Cli {
     #[clap(short = 'c', long = "config", value_name = "CONFIG")]
@@ -80,7 +71,7 @@ async fn main() {
             0,
             0,
             torrent.info().length.unwrap().try_into().unwrap(),
-            torrent::AnnounceEvent::Started,
+            AnnounceEvent::Started,
         )
         .await
         .unwrap();
