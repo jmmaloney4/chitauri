@@ -43,7 +43,6 @@ where
     D: serde::Deserializer<'de>,
 {
     let s: String = Deserialize::deserialize(deserializer)?;
-    println!("PARSING IP: {}", s);
     match IpAddr::from_str(&s) {
         Ok(ip) => Ok(ip),
         Err(e) => Err(serde::de::Error::custom(format!(
@@ -58,7 +57,7 @@ pub(crate) struct HTTPAnnounceResponse {
     interval: u32,
     #[serde(deserialize_with = "deserialize_peers")]
     peers: Vec<HTTPAnnounceResponsePeer>,
-    #[serde(deserialize_with = "deserialize_peers6")]
+    #[serde(default, deserialize_with = "deserialize_peers6")]
     peers6: Option<Vec<HTTPAnnounceResponsePeer>>,
 }
 
@@ -115,51 +114,43 @@ fn deserialize_peers6<'de, D>(
 where
     D: serde::Deserializer<'de>,
 {
-    match Option::<ByteBuf>::deserialize(deserializer)?.as_ref() {
+    match Option::<&'de [u8]>::deserialize(deserializer)?.as_ref() {
         None => Ok(None),
-        Some(bytes) => deserialize_compact_peers6(bytes)
-            .map(Some)
-            .map_err(de::Error::custom),
+        Some(bytes) => {
+            if bytes.len() % 18 != 0 {
+                return Err(serde::de::Error::custom(format!(
+                    "invalid compact peer list length: {}",
+                    bytes.len()
+                )));
+            }
+            let mut peers = Vec::new();
+            let mut i = 0;
+            while i < bytes.len() {
+                let ip = IpAddr::V6(Ipv6Addr::from([
+                    bytes[i],
+                    bytes[i + 1],
+                    bytes[i + 2],
+                    bytes[i + 3],
+                    bytes[i + 4],
+                    bytes[i + 5],
+                    bytes[i + 6],
+                    bytes[i + 7],
+                    bytes[i + 8],
+                    bytes[i + 9],
+                    bytes[i + 10],
+                    bytes[i + 11],
+                    bytes[i + 12],
+                    bytes[i + 13],
+                    bytes[i + 14],
+                    bytes[i + 15],
+                ]));
+                let port = u16::from_be_bytes([bytes[i + 16], bytes[i + 17]]);
+                peers.push(HTTPAnnounceResponsePeer { id: None, ip, port });
+                i += 18;
+            }
+            Ok(Some(peers))
+        }
     }
-}
-
-fn deserialize_compact_peers6(
-    bytes: &[u8],
-) -> Result<Vec<HTTPAnnounceResponsePeer>, serde_bencode::Error> {
-    // let bytes = ByteBuf::deserialize(deserializer)?;
-    if bytes.len() % 18 != 0 {
-        return Err(serde_bencode::Error::Custom(format!(
-            "invalid compact peer list length: {}",
-            bytes.len()
-        )));
-    }
-
-    let mut peers = Vec::new();
-    let mut i = 0;
-    while i < bytes.len() {
-        let ip = IpAddr::V6(Ipv6Addr::from([
-            bytes[i],
-            bytes[i + 1],
-            bytes[i + 2],
-            bytes[i + 3],
-            bytes[i + 4],
-            bytes[i + 5],
-            bytes[i + 6],
-            bytes[i + 7],
-            bytes[i + 8],
-            bytes[i + 9],
-            bytes[i + 10],
-            bytes[i + 11],
-            bytes[i + 12],
-            bytes[i + 13],
-            bytes[i + 14],
-            bytes[i + 15],
-        ]));
-        let port = u16::from_be_bytes([bytes[i + 16], bytes[i + 17]]);
-        peers.push(HTTPAnnounceResponsePeer { id: None, ip, port });
-        i += 18;
-    }
-    Ok(peers)
 }
 
 pub(crate) struct HTTPTracker {
@@ -276,10 +267,6 @@ mod tests {
         let bytes = b"d8:completei12e10:incompletei1e8:intervali1800e5:peers6:\xb9}\xbe;\x1b\x1ee";
         let resp = serde_bencode::from_bytes::<HTTPAnnounceResponse>(bytes);
         assert!(resp.is_ok());
-        match &resp {
-            Ok(_) => {}
-            Err(e) => println!("Error: {:?}", e),
-        }
         assert_eq!(
             resp.unwrap(),
             HTTPAnnounceResponse {
