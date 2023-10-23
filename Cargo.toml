@@ -25,7 +25,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_bencode = "0.2.3"
 serde_bytes = "0.11.9"
 serde_yaml = "0.9.17"
-sha1 = "0.10.5"
+sha1 = "0.10.6"
 simple_logger = { version = "4.0.0", features = ["stderr"] }
 snafu = "0.7.4"
 thiserror = "1.0.38"
