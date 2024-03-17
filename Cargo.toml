@@ -24,7 +24,7 @@ sea-orm = { version = "0.11.1", features = [ "sqlx-sqlite", "runtime-tokio-rustl
 serde = { version = "1.0.152", features = ["derive"] }
 serde_bencode = "0.2.3"
 serde_bytes = "0.11.9"
-serde_yaml = "0.9.17"
+serde_yaml = "0.9.33"
 sha1 = "0.10.5"
 simple_logger = { version = "4.0.0", features = ["stderr"] }
 snafu = "0.7.4"
